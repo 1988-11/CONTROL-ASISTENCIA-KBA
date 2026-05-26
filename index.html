@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>KBA - Control de Asistencia</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos personalizados KBA - INDUSTRIAS ELECTRICAS KBA SAC */
+        /* Colores: Azul cielo (#87CEEB), Rojo granate (#8B0000), Blanco (#FFFFFF) */
+        
+        .btn-reporte {
+            background: #8B0000;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-reporte:hover {
+            background: #a00000;
+            transform: scale(1.02);
+        }
+        .user-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #87CEEB;
+        }
+        .user-info {
+            background: linear-gradient(135deg, #87CEEB, #00BFFF);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #fff;
+        }
+        .btn-salir {
+            background: #8B0000;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .btn-salir:hover {
+            background: #6d0000;
+        }
+        .admin-panel {
+            background: linear-gradient(135deg, #e8f4f8, #d1ecf1);
+            padding: 16px;
+            border-radius: 24px;
+            margin-bottom: 20px;
+            border-left: 5px solid #8B0000;
+        }
+        .admin-panel h3 {
+            margin: 0 0 12px 0;
+            color: #8B0000;
+            font-size: 1rem;
+        }
+        .botones-reportes {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .fecha-rango {
+            background: white;
+            padding: 12px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            border: 1px solid #87CEEB;
+        }
+        .fecha-rango label {
+            font-weight: bold;
+            color: #8B0000;
+        }
+        .fecha-inputs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .fecha-inputs input, .fecha-inputs select {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+        }
+        .fecha-inputs select {
+            flex: 1;
+            min-width: 200px;
+        }
+        .btn-semana {
+            background: #87CEEB;
+            color: #333;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .btn-semana:hover {
+            background: #00BFFF;
+        }
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #87CEEB 0%, #005c8a 100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 9999;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 32px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-top: 5px solid #8B0000;
+        }
+        .login-card h2 {
+            color: #8B0000;
+            margin-bottom: 10px;
+        }
+        .login-card p {
+            color: #5a6e7c;
+            margin-bottom: 30px;
+        }
+        .login-card .empresa-nombre {
+            font-size: 0.8rem;
+            color: #87CEEB;
+            margin-top: 15px;
+        }
+        .btn-ingresar {
+            background: #8B0000;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 32px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-ingresar:hover {
+            background: #6d0000;
+            transform: scale(1.02);
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #8B0000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .empresa-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .empresa-icon {
+            font-size: 2rem;
+        }
+        .footer-kba {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 24px;
+            color: #78909c;
+        }
+        .footer-kba span {
+            color: #8B0000;
+            font-weight: bold;
+        }
+        .kba-title {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .kba-title h1 {
+            display: inline-block;
+            margin: 0;
+            color: #8B0000;
+        }
+        .kba-title span {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="empresa-header">
+                <span class="empresa-icon">⚡</span>
+                <h2>KBA</h2>
+            </div>
+            <p>INDUSTRIAS ELECTRICAS KBA SAC</p>
+            <p style="font-size: 0.9rem; color: #666;">Control de Asistencia</p>
+            <button class="btn-ingresar" onclick="mostrarLogin()">👉 INGRESAR AL SISTEMA</button>
+            <div class="empresa-nombre">⚡ KBA | Calidad y Servicio ⚡</div>
+        </div>
+    </div>
+
+    <!-- Contenido principal (inicialmente oculto) -->
+    <div id="appContent" style="display: none;">
+        <div class="app-container">
+            <!-- Barra de usuario -->
+            <div class="user-bar">
+                <span class="user-info" id="userInfo">👤 Usuario</span>
+                <button class="btn-salir" onclick="cerrarSesion()">🚪 Salir</button>
+            </div>
+
+            <!-- Panel de ADMIN (solo visible para administradores) -->
+            <div id="adminPanel" class="admin-panel" style="display: none;">
+                <h3>📊 PANEL ADMINISTRADOR - KBA</h3>
+                
+                <!-- Selector de rango de fechas -->
+                <div class="fecha-rango">
+                    <label>📅 SELECCIONA RANGO DE FECHAS:</label>
+                    <div class="fecha-inputs">
+                        <input type="date" id="fechaInicio">
+                        <span>→</span>
+                        <input type="date" id="fechaFin">
+                        <button class="btn-semana" onclick="establecerFechaActual()">📆 Semana Actual</button>
+                        <button class="btn-semana" onclick="establecerMesActual()" style="background: #00BFFF;">📅 Mes Actual</button>
+                    </div>
+                </div>
+                
+                <!-- Selector de empleado -->
+                <div class="fecha-rango" style="margin-top: 10px;">
+                    <label>👤 FILTRAR POR EMPLEADO:</label>
+                    <div class="fecha-inputs">
+                        <select id="empleadoFiltro" style="flex: 1;">
+                            <option value="todos">📋 Todos los empleados</option>
+                        </select>
+                        <button class="btn-semana" onclick="cargarListaEmpleados()" style="background: #8B0000; color: white;">🔄 Cargar Empleados</button>
+                    </div>
+                </div>
+                
+                <div class="botones-reportes">
+                    <button class="btn-reporte" onclick="generarReporteConFechas('excel')">📊 Reporte Excel/CSV</button>
+                    <button class="btn-reporte" onclick="generarReporteCompletoDescargable()">📋 Reporte Completo</button>
+                    <button class="btn-reporte" onclick="generarReporteFaltasDescargable()">⚠️ Reporte Faltas</button>
+                    <button class="btn-reporte" onclick="generarReporteTardanzasDescargable()">⏰ Reporte Tardanzas</button>
+                    <button class="btn-reporte" onclick="abrirGoogleSheets()" style="background: #87CEEB; color: #333;">📂 Abrir Google Sheets</button>
+                </div>
+            </div>
+
+            <!-- Título KBA -->
+            <div class="kba-title">
+                <span>⚡</span>
+                <h1>KBA</h1>
+            </div>
+            <div class="sub">Control de Asistencia - INDUSTRIAS ELECTRICAS KBA SAC</div>
+            
+            <!-- Línea de autoría con efecto de colores -->
+            <div class="credit-line">
+                <span class="credit-text">✨ Aplicativo desarrollado por Edward O. © 2026 ✨</span>
+            </div>
+
+            <!-- Campo DNI -->
+            <div class="dni-field">
+                <label>🆔 Ingresa tu DNI</label>
+                <input type="text" id="dni" placeholder="Ej: 00000000" autocomplete="off">
+            </div>
+
+            <!-- Información del empleado -->
+            <div id="infoEmpleado" class="info-empleado" style="display: none;">
+                <img id="fotoEmpleado" class="foto-empleado" src="">
+                <div class="datos-empleado">
+                    <h3 id="nombreEmpleado">-</h3>
+                    <p id="deptoEmpleado">📁 -</p>
+                    <p id="cargoEmpleado">💼 -</p>
+                    <span id="tipoEmpleado" class="tipo-badge">-</span>
+                    <div id="horarioInfo" class="horario-info"></div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="botones">
+                <button class="entrada" id="btnEntrada" disabled>✅ MARCAR ENTRADA</button>
+                <button class="salida" id="btnSalida" disabled>🏁 MARCAR SALIDA</button>
+                <button class="observacion" id="btnObs" disabled>📌 AGREGAR OBSERVACIÓN</button>
+            </div>
+
+            <!-- Mensaje de estado -->
+            <div id="mensajeStatus" class="status">
+                📍 Ingresa tu DNI para comenzar
+            </div>
+            
+            <div class="footer-kba">
+                ⚡ INDUSTRIAS ELECTRICAS KBA SAC | Calidad y Servicio ⚡
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para justificar llegada tarde -->
+    <div id="modalTarde" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #8B0000;">⏰ LLEGADA TARDE</h3>
+            <p id="modalMensajeTarde">Debes justificar el motivo de tu llegada tarde.</p>
+            <textarea id="justificacionTarde" placeholder="Escribe el motivo de tu llegada tarde..."></textarea>
+            <div class="modal-buttons">
+                <button class="btn-cancelar" id="btnCancelarTarde">Cancelar</button>
+                <button class="btn-confirmar" id="btnConfirmarTarde" style="background: #8B0000;">Justificar y Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para justificar salida anticipada -->
+    <div id="modalSalida" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #8B0000;">⏰ SALIDA ANTICIPADA</h3>
+            <p id="modalMensajeSalida">Debes justificar el motivo de tu salida antes de tiempo.</p>
+            <textarea id="justificacionSalida" placeholder="Escribe el motivo de tu salida anticipada..."></textarea>
+            <div class="modal-buttons">
+                <button class="btn-cancelar" id="btnCancelarSalida">Cancelar</button>
+                <button class="btn-confirmar" id="btnConfirmarSalida" style="background: #8B0000;">Justificar y Salir</button>
+            </div>
+        </div>
+    </div>
+    <!-- Línea de autoría con efecto de colores -->
+    <!--<div class="credit-line">
+        <span class="credit-text">✨ Aplicativo desarrollado por Edward O. © 2026 ✨</span>
+    </div>-->
+    <script src="script.js"></script>
+</body>
+</html>
