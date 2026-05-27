@@ -1,10 +1,11 @@
 // ==================== CONFIGURACIÓN ====================
+// *** IMPORTANTE: VERIFICA QUE ESTA URL SEA EXACTAMENTE LA DE TU WEB APP ***
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzV17_jsijTTToWBYDmI-vLM0cI75KbNucHneDHq6nHVc_ly28gfy5fLW1cIFbkxnBo/exec";
 
 // ==================== SISTEMA DE LOGIN MULTI-USUARIO ====================
 const USUARIOS = {
     admin: { password: "admin123", rol: "ADMIN", nombre: "ADMINISTRADOR" },
-    puerta: { password: "puerta2026", rol: "PUERTA", nombre: "ENCARGADO DE PUERTA" }
+    puerta: { password: "puerta2024", rol: "PUERTA", nombre: "ENCARGADO DE PUERTA" }
 };
 
 let usuarioActual = null;
@@ -27,45 +28,37 @@ const SIN_RESTRICCION = [
     "JARA VEGA, MARIA JANET",
     "VALLEJOS VILLANUEVA, HAROLD IVAN",
     "JARA BALAREZO, KARINA"
-    ];
+];
 
-// Función para verificar si un empleado tiene restricción horaria
 function tieneRestriccionHoraria(nombreCompleto) {
     return !SIN_RESTRICCION.some(nombre => 
         nombreCompleto.toUpperCase().includes(nombre.toUpperCase())
     );
 }
 
-// ==================== SISTEMA DE SONIDOS Y VOZ ====================
-
-// Crear contexto de audio (necesario para algunos navegadores)
+// ==================== SISTEMA DE SONIDOS Y VOZ (CORREGIDO) ====================
 let audioContext = null;
 
-// Función para reproducir sonido de "beep"
 function reproducirSonido(tipo) {
     try {
-        // Crear un sonido simple con Web Audio API
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
-        
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        // Configurar según el tipo de registro
         if (tipo === "entrada") {
-            oscillator.frequency.value = 880; // Nota LA5 (aguda)
+            oscillator.frequency.value = 880;
             gainNode.gain.value = 0.3;
             oscillator.type = "sine";
         } else if (tipo === "salida") {
-            oscillator.frequency.value = 440; // Nota LA4 (grave)
+            oscillator.frequency.value = 440;
             gainNode.gain.value = 0.3;
             oscillator.type = "sine";
         } else {
-            oscillator.frequency.value = 660; // Nota MI5 (media)
+            oscillator.frequency.value = 660;
             gainNode.gain.value = 0.3;
             oscillator.type = "sine";
         }
@@ -74,7 +67,6 @@ function reproducirSonido(tipo) {
         gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
         oscillator.stop(audioContext.currentTime + 0.5);
         
-        // Reactivar contexto después de usuario (por políticas de navegador)
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
@@ -83,21 +75,26 @@ function reproducirSonido(tipo) {
     }
 }
 
-// Función para reproducir voz (texto a voz)
+// --- Función auxiliar para formatear el nombre para la voz ---
+function formatearNombreParaVoz(nombre) {
+    // Convierte el nombre a minúsculas y luego capitaliza cada palabra.
+    // "OSORIO DE LA CRUZ, EDWARD ERICK" -> "Osorio de la Cruz, Edward Erick"
+    return nombre.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+}
+
 function hablar(texto) {
     try {
-        // Detener cualquier voz en curso
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
         }
         
         const utterance = new SpeechSynthesisUtterance(texto);
-        utterance.lang = 'es-ES'; // Español de España
-        utterance.rate = 1.0;     // Velocidad normal
-        utterance.pitch = 1.0;     // Tono normal
-        utterance.volume = 1.0;    // Volumen máximo
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.9;  // Ligeramente más lento para mejor claridad
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
         
-        // Seleccionar voz femenina si está disponible (más profesional)
+        // Intentar usar una voz femenina en español si está disponible
         const voices = window.speechSynthesis.getVoices();
         const spanishVoice = voices.find(voice => voice.lang === 'es-ES' && voice.name.includes('Google'));
         if (spanishVoice) {
@@ -110,12 +107,8 @@ function hablar(texto) {
     }
 }
 
-// Función para reproducir sonido y voz según el tipo de registro
 function notificarRegistro(tipo, mensajePersonalizado = "") {
-    // Reproducir sonido
     reproducirSonido(tipo);
-    
-    // Pequeña pausa antes de la voz para no solaparse
     setTimeout(() => {
         let mensaje = "";
         if (tipo === "entrada") {
@@ -129,7 +122,6 @@ function notificarRegistro(tipo, mensajePersonalizado = "") {
     }, 200);
 }
 
-// Función para activar el audio (requiere interacción del usuario)
 function activarAudio() {
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume();
@@ -204,7 +196,6 @@ function cerrarSesion() {
 }
 
 // ==================== REPORTES DESCARGABLES ====================
-
 function establecerFechaActual() {
     const hoy = new Date();
     const diaSemana = hoy.getDay();
@@ -240,26 +231,23 @@ async function cargarListaEmpleados() {
             const select = document.getElementById('empleadoFiltro');
             if (select) {
                 select.innerHTML = '<option value="todos">📋 Todos los empleados</option>';
-                
                 resultado.empleados.forEach(emp => {
                     const option = document.createElement('option');
                     option.value = emp.dni;
                     option.textContent = `${emp.dni} - ${emp.nombre}`;
                     select.appendChild(option);
                 });
-                
                 mostrarMensaje(`✅ ${resultado.empleados.length} empleados cargados`, 'success');
             }
         } else {
             mostrarMensaje(`⚠️ No se pudieron cargar los empleados`, 'error');
         }
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al cargar empleados:", error);
         mostrarMensaje("⚠️ Error al cargar empleados", 'error');
     }
 }
 
-// ==================== REPORTE EXCEL/CSV ====================
 async function generarReporteConFechas(tipo) {
     let fechaInicioElem = document.getElementById('fechaInicio');
     let fechaFinElem = document.getElementById('fechaFin');
@@ -278,23 +266,19 @@ async function generarReporteConFechas(tipo) {
     
     try {
         const url = `${SCRIPT_URL}?accion=csv&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
-        
         const link = document.createElement('a');
         link.href = url;
         link.download = `reporte_asistencia_${fechaInicio}_al_${fechaFin}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
         mostrarMensaje(`✅ Reporte generado - Revisa tu carpeta de descargas`, 'success');
-        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al generar reporte:", error);
         mostrarMensaje("⚠️ Error al generar reporte", 'error');
     }
 }
 
-// ==================== REPORTE COMPLETO DESCARGABLE ====================
 async function generarReporteCompletoDescargable() {
     let fechaInicioElem = document.getElementById('fechaInicio');
     let fechaFinElem = document.getElementById('fechaFin');
@@ -313,23 +297,19 @@ async function generarReporteCompletoDescargable() {
     
     try {
         const url = `${SCRIPT_URL}?accion=reporteCompleto&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
-        
         const link = document.createElement('a');
         link.href = url;
         link.download = `reporte_completo_${fechaInicio}_al_${fechaFin}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
         mostrarMensaje(`✅ Reporte completo descargado`, 'success');
-        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al generar reporte completo:", error);
         mostrarMensaje("⚠️ Error al generar reporte", 'error');
     }
 }
 
-// ==================== REPORTE FALTAS DESCARGABLE ====================
 async function generarReporteFaltasDescargable() {
     let fechaInicioElem = document.getElementById('fechaInicio');
     let fechaFinElem = document.getElementById('fechaFin');
@@ -348,23 +328,19 @@ async function generarReporteFaltasDescargable() {
     
     try {
         const url = `${SCRIPT_URL}?accion=reporteFaltas&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
-        
         const link = document.createElement('a');
         link.href = url;
         link.download = `reporte_faltas_${fechaInicio}_al_${fechaFin}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
         mostrarMensaje(`✅ Reporte de faltas descargado`, 'success');
-        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al generar reporte de faltas:", error);
         mostrarMensaje("⚠️ Error al generar reporte", 'error');
     }
 }
 
-// ==================== REPORTE TARDANZAS DESCARGABLE ====================
 async function generarReporteTardanzasDescargable() {
     let fechaInicioElem = document.getElementById('fechaInicio');
     let fechaFinElem = document.getElementById('fechaFin');
@@ -383,23 +359,19 @@ async function generarReporteTardanzasDescargable() {
     
     try {
         const url = `${SCRIPT_URL}?accion=reporteTardanzas&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
-        
         const link = document.createElement('a');
         link.href = url;
         link.download = `reporte_tardanzas_${fechaInicio}_al_${fechaFin}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
         mostrarMensaje(`✅ Reporte de tardanzas descargado`, 'success');
-        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al generar reporte de tardanzas:", error);
         mostrarMensaje("⚠️ Error al generar reporte", 'error');
     }
 }
 
-// ==================== ABRIR GOOGLE SHEETS ====================
 function abrirGoogleSheets() {
     window.open('https://docs.google.com/spreadsheets', '_blank');
     mostrarMensaje("📂 Abre Google Sheets y busca las hojas de reporte", 'warning');
@@ -550,7 +522,7 @@ async function buscarEmpleadoPorDNI(dni) {
     }
 }
 
-// ==================== REGISTRAR ASISTENCIA CON LISTA BLANCA ====================
+// ==================== REGISTRAR ASISTENCIA (CORREGIDO - VOZ MEJORADA) ====================
 async function procesarRegistro(tipo, observacionInicial = "") {
     if (!empleadoActual) {
         mostrarMensaje("❌ Primero ingresa un DNI válido", 'error');
@@ -568,17 +540,14 @@ async function procesarRegistro(tipo, observacionInicial = "") {
     // Verificar restricción horaria usando la lista blanca
     const tieneRestriccion = tieneRestriccionHoraria(nombreCompleto);
     
-    // Log para depuración
     if (!tieneRestriccion) {
         console.log(`✅ Empleado SIN restricción horaria: ${nombreCompleto}`);
     }
     
-    // Verificar si es operario de máquina
     const esOperarioMaquina = departamento.toUpperCase() === "MAQUINA" || 
-    cargo.toUpperCase().includes("MAQUINA") || 
-    cargo.toUpperCase().includes("OP.");
+                              cargo.toUpperCase().includes("MAQUINA") || 
+                              cargo.toUpperCase().includes("OP.");
     
-    // ========== 1. PREGUNTAR TURNO (solo operarios de máquina CON restricción) ==========
     if (tipo === "ENTRADA" && esOperarioMaquina && tieneRestriccion) {
         const turno = prompt("🔄 SELECCIONA TU TURNO:\n\n1 - TURNO DÍA (8:00 AM - 8:00 PM)\n2 - TURNO NOCHE (8:00 PM - 8:00 AM)\n\n(1 o 2)");
         if (turno === "1") {
@@ -593,7 +562,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // Validaciones locales
     if (tipo === "ENTRADA" && yaRegistroEntrada(dni)) {
         mostrarMensaje(`❌ Ya registraste ENTRADA hoy`, 'error');
         return false;
@@ -610,7 +578,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // ========== 2. VERIFICAR TARDANZA (SOLO si tiene restricción) ==========
     let esTarde = false;
     let horaLimite = "";
     let tipoEmpleado = empleadoActual.tipoEmpleado || "OFICINA";
@@ -668,7 +635,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // ========== 3. VERIFICAR SALIDA ANTICIPADA (SOLO si tiene restricción) ==========
     if (tipo === "SALIDA" && tieneRestriccion) {
         let esAnticipada = false;
         let horaMinima = "";
@@ -730,17 +696,20 @@ async function procesarRegistro(tipo, observacionInicial = "") {
     try {
         await fetch(url, { method: 'GET', mode: 'no-cors' });
         
+        // --- Formatear el nombre para la notificación de voz ---
+        const nombreFormateado = formatearNombreParaVoz(empleadoActual.nombre);
+        
         if (tipo === "ENTRADA") {
             guardarEntrada(dni, horaActual);
             mostrarMensaje(`✅ ENTRADA registrada a las ${horaActual}${turnoSeleccionado ? " | Turno " + turnoSeleccionado : ""}`, 'success');
-            notificarRegistro("entrada", `Ingreso registrado para ${empleadoActual.nombre} a las ${horaActual}`);
+            notificarRegistro("entrada", `Ingreso registrado para ${nombreFormateado} a las ${horaActual}`);
         } else if (tipo === "SALIDA") {
             guardarSalida(dni, horaActual);
             mostrarMensaje(`✅ SALIDA registrada a las ${horaActual}`, 'success');
-            notificarRegistro("salida", `Salida registrada para ${empleadoActual.nombre} a las ${horaActual}`);
+            notificarRegistro("salida", `Salida registrada para ${nombreFormateado} a las ${horaActual}`);
         } else if (tipo === "OBSERVACION") {
             mostrarMensaje(`✅ Observación agregada`, 'success');
-            notificarRegistro("observacion", `Observación agregada para ${empleadoActual.nombre}`);
+            notificarRegistro("observacion", `Observación agregada para ${nombreFormateado}`);
         }
         
         if (tipo === "ENTRADA" || tipo === "SALIDA") {
@@ -755,7 +724,7 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
         return true;
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error en el registro:", error);
         mostrarMensaje("⚠️ Error de conexión", 'error');
         return false;
     }
@@ -792,7 +761,6 @@ function handleObservacion() {
     }
 }
 
-// Agregar evento para activar audio al hacer clic en cualquier botón
 document.addEventListener('click', function() {
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume();
