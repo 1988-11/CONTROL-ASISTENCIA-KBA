@@ -5,7 +5,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzV17_jsijTTToWBYDmI
 // ==================== SISTEMA DE LOGIN MULTI-USUARIO ====================
 const USUARIOS = {
     admin: { password: "admin123", rol: "ADMIN", nombre: "ADMINISTRADOR" },
-    puerta: { password: "puerta2024", rol: "PUERTA", nombre: "ENCARGADO DE PUERTA" }
+    puerta: { password: "puerta2026", rol: "PUERTA", nombre: "ENCARGADO DE PUERTA" }
 };
 
 let usuarioActual = null;
@@ -36,7 +36,7 @@ function tieneRestriccionHoraria(nombreCompleto) {
     );
 }
 
-// ==================== SISTEMA DE SONIDOS Y VOZ (CORREGIDO) ====================
+// ==================== SISTEMA DE SONIDOS Y VOZ ====================
 let audioContext = null;
 
 function reproducirSonido(tipo) {
@@ -75,10 +75,7 @@ function reproducirSonido(tipo) {
     }
 }
 
-// --- Función auxiliar para formatear el nombre para la voz ---
 function formatearNombreParaVoz(nombre) {
-    // Convierte el nombre a minúsculas y luego capitaliza cada palabra.
-    // "OSORIO DE LA CRUZ, EDWARD ERICK" -> "Osorio de la Cruz, Edward Erick"
     return nombre.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
 }
 
@@ -90,11 +87,10 @@ function hablar(texto) {
         
         const utterance = new SpeechSynthesisUtterance(texto);
         utterance.lang = 'es-ES';
-        utterance.rate = 0.9;  // Ligeramente más lento para mejor claridad
+        utterance.rate = 0.9;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
         
-        // Intentar usar una voz femenina en español si está disponible
         const voices = window.speechSynthesis.getVoices();
         const spanishVoice = voices.find(voice => voice.lang === 'es-ES' && voice.name.includes('Google'));
         if (spanishVoice) {
@@ -125,6 +121,28 @@ function notificarRegistro(tipo, mensajePersonalizado = "") {
 function activarAudio() {
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume();
+    }
+}
+
+// ==================== FUNCIONES DE HORARIO (SÁBADO) ====================
+function esSabado() {
+    const hoy = new Date();
+    return hoy.getDay() === 6; // 6 = sábado
+}
+
+function getHorarioLimite(tipoEmpleado, esEntrada = true) {
+    const esSab = esSabado();
+    
+    // Horario sábado para oficina
+    if (tipoEmpleado !== "OPERATIVO" && esSab) {
+        return esEntrada ? "08:00:00" : "12:45:00";
+    }
+    
+    // Horario normal
+    if (tipoEmpleado === "OPERATIVO") {
+        return esEntrada ? "08:00:00" : "19:30:00";
+    } else {
+        return esEntrada ? "08:00:00" : "17:30:00";
     }
 }
 
@@ -416,14 +434,6 @@ function guardarSalida(dni, hora) {
     localStorage.setItem(clave, hora);
 }
 
-function getHorarioLimite(tipoEmpleado, esEntrada = true) {
-    if (tipoEmpleado === "OPERATIVO") {
-        return esEntrada ? "08:00:00" : "19:30:00";
-    } else {
-        return esEntrada ? "08:00:00" : "17:30:00";
-    }
-}
-
 function verificarHorario(tipoEmpleado, horaActual, esEntrada = true) {
     const horaLimite = getHorarioLimite(tipoEmpleado, esEntrada);
     const [horaLim, minLim, segLim] = horaLimite.split(':').map(Number);
@@ -522,7 +532,7 @@ async function buscarEmpleadoPorDNI(dni) {
     }
 }
 
-// ==================== REGISTRAR ASISTENCIA (CORREGIDO - VOZ MEJORADA) ====================
+// ==================== REGISTRAR ASISTENCIA ====================
 async function procesarRegistro(tipo, observacionInicial = "") {
     if (!empleadoActual) {
         mostrarMensaje("❌ Primero ingresa un DNI válido", 'error');
@@ -537,7 +547,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
     let turnoSeleccionado = "";
     let observacion = observacionInicial;
     
-    // Verificar restricción horaria usando la lista blanca
     const tieneRestriccion = tieneRestriccionHoraria(nombreCompleto);
     
     if (!tieneRestriccion) {
@@ -696,7 +705,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
     try {
         await fetch(url, { method: 'GET', mode: 'no-cors' });
         
-        // --- Formatear el nombre para la notificación de voz ---
         const nombreFormateado = formatearNombreParaVoz(empleadoActual.nombre);
         
         if (tipo === "ENTRADA") {
@@ -792,7 +800,41 @@ document.addEventListener('DOMContentLoaded', function() {
     btnCancelarSalida = document.getElementById('btnCancelarSalida');
     btnConfirmarSalida = document.getElementById('btnConfirmarSalida');
     
+    // ========== CONFIGURACIÓN DE TECLADO NUMÉRICO PARA DNI ==========
     if (dniInput) {
+        // Configurar teclado numérico en móviles
+        dniInput.setAttribute('inputmode', 'numeric');
+        dniInput.setAttribute('pattern', '[0-9]*');
+        
+        // Forzar solo números y buscar automáticamente al completar 8 dígitos
+        dniInput.addEventListener('input', function(e) {
+            // Limitar a solo números
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Si tiene 8 dígitos, buscar automáticamente
+            if (this.value.length === 8) {
+                buscarEmpleadoPorDNI(this.value);
+                // Ocultar teclado en móviles después de la búsqueda
+                this.blur();
+            }
+        });
+        
+        // Bloquear letras en el teclado
+        dniInput.addEventListener('keypress', function(e) {
+            if (e.key < '0' || e.key > '9') {
+                e.preventDefault();
+            }
+        });
+        
+        // Prevenir pegado de texto no numérico
+        dniInput.addEventListener('paste', function(e) {
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            if (!/^\d+$/.test(pastedText)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Mantener eventos existentes (blur y enter)
         dniInput.addEventListener('blur', () => buscarEmpleadoPorDNI(dniInput.value.trim()));
         dniInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') buscarEmpleadoPorDNI(dniInput.value.trim());
