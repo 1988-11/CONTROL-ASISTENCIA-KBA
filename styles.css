@@ -41,7 +41,7 @@ body::before {
 .login-container::before {
     content: "";
     position: absolute;
-    background-image: url('imagen/logo.png');
+    background-image: url('logo.png');
     background-size: 80%;
     background-repeat: no-repeat;
     background-position: center;
