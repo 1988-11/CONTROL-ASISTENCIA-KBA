@@ -278,10 +278,10 @@
                 <span class="credit-text">✨ Aplicativo desarrollado por Edward O. © 2026 ✨</span>
             </div>
 
-            <!-- Campo DNI -->
+            <!-- Campo DNI (CORREGIDO - con teclado numérico) -->
             <div class="dni-field">
                 <label>🆔 Ingresa tu DNI</label>
-                <input type="text" id="dni" placeholder="Ej: 00000000" autocomplete="off">
+                <input type="text" id="dni" placeholder="Ej: 00000000" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="8">
             </div>
 
             <!-- Información del empleado -->
@@ -339,10 +339,7 @@
             </div>
         </div>
     </div>
-    <!-- Línea de autoría con efecto de colores -->
-    <!--<div class="credit-line">
-        <span class="credit-text">✨ Aplicativo desarrollado por Edward O. © 2026 ✨</span>
-    </div>-->
+
     <script src="script.js"></script>
 </body>
 </html>
