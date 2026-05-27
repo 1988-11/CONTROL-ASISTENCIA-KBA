@@ -1,0 +1,24 @@
+{
+  "name": "KBA Control de Asistencia",
+  "short_name": "KBA Asistencia",
+  "description": "Sistema de Control de Asistencia - INDUSTRIAS ELECTRICAS KBA SAC",
+  "start_url": "/CONTROL-ASISTENCIA-KBA/",
+  "display": "standalone",
+  "theme_color": "#8B0000",
+  "background_color": "#87CEEB",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "imagen/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "imagen/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
