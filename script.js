@@ -545,8 +545,8 @@ async function procesarRegistro(tipo, observacionInicial = "") {
     }
     
     const esOperarioMaquina = departamento.toUpperCase() === "MAQUINA" || 
-                              cargo.toUpperCase().includes("MAQUINA") || 
-                              cargo.toUpperCase().includes("OP.");
+    cargo.toUpperCase().includes("MAQUINA") || 
+    cargo.toUpperCase().includes("OP.MAQUINA");
     
     if (tipo === "ENTRADA" && esOperarioMaquina && tieneRestriccion) {
         const turno = prompt("🔄 SELECCIONA TU TURNO:\n\n1 - TURNO DÍA (8:00 AM - 8:00 PM)\n2 - TURNO NOCHE (8:00 PM - 8:00 AM)\n\n(1 o 2)");
