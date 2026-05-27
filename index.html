@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>KBA - Control de Asistencia</title>
+    
+    <!-- ========== PWA - CONFIGURACIÓN PARA INSTALAR COMO APP ========== -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KBA Asistencia">
+    <meta name="theme-color" content="#8B0000">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <link rel="stylesheet" href="styles.css">
     <style>
         /* Estilos personalizados KBA - INDUSTRIAS ELECTRICAS KBA SAC */
@@ -340,6 +349,16 @@
         </div>
     </div>
 
+    <!-- Service Worker para PWA (instalación como app) -->
+    <script>
+        // Registrar Service Worker para que la app se pueda instalar
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/CONTROL-ASISTENCIA-KBA/sw.js')
+                .then(reg => console.log('✅ Service Worker registrado correctamente:', reg))
+                .catch(err => console.log('❌ Error al registrar Service Worker:', err));
+        }
+    </script>
+    
     <script src="script.js"></script>
 </body>
 </html>
