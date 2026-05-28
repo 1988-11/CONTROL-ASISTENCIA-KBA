@@ -644,24 +644,38 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
+    // ========== VERIFICAR SALIDA ANTICIPADA (CORREGIDO PARA TURNO NOCHE) ==========
     if (tipo === "SALIDA" && tieneRestriccion) {
         let esAnticipada = false;
         let horaMinima = "";
         
+        // Para operarios de máquina con turno específico
         if (esOperarioMaquina && turnoSeleccionado === "NOCHE") {
+            // Turno noche: horario laboral de 8:00 PM a 8:00 AM del día siguiente
+            // Salida anticipada si sale ANTES de las 8:00 AM
             horaMinima = "08:00:00";
             esAnticipada = horaActual < horaMinima;
-        } else if (esOperarioMaquina && turnoSeleccionado === "DIA") {
+        } 
+        else if (esOperarioMaquina && turnoSeleccionado === "DIA") {
+            // Turno día: horario laboral de 8:00 AM a 8:00 PM
+            // Salida anticipada si sale ANTES de las 8:00 PM
             horaMinima = "20:00:00";
             esAnticipada = horaActual < horaMinima;
-        } else {
-            horaMinima = getHorarioLimite(tipoEmpleado, false);
-            esAnticipada = verificarHorario(tipoEmpleado, horaActual, false);
+        }
+        else if (tipoEmpleado === "OPERATIVO") {
+            // Operativo normal: horario laboral de 8:00 AM a 7:30 PM
+            horaMinima = "19:30:00";
+            esAnticipada = horaActual < horaMinima;
+        }
+        else {
+            // Oficina: horario laboral de 8:00 AM a 5:30 PM
+            horaMinima = "17:30:00";
+            esAnticipada = horaActual < horaMinima;
         }
         
         if (esAnticipada) {
             const modalMsg = document.getElementById('modalMensajeSalida');
-            if (modalMsg) modalMsg.innerHTML = `⚠️ Tu hora de salida es ${horaActual}. La hora mínima es ${horaMinima}.<br><br>Debes justificar el motivo de tu salida anticipada.`;
+            if (modalMsg) modalMsg.innerHTML = `⚠️ SALIDA ANTICIPADA\n\nHora actual: ${horaActual}\nHora mínima de salida: ${horaMinima}\n\nTu horario laboral termina a las ${horaMinima}.\n\nDebes justificar el motivo de tu salida anticipada.`;
             if (justificacionSalida) justificacionSalida.value = "";
             if (modalSalida) modalSalida.style.display = 'flex';
             
