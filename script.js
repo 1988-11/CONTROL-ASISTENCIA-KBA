@@ -532,7 +532,7 @@ async function buscarEmpleadoPorDNI(dni) {
     }
 }
 
-// ==================== REGISTRAR ASISTENCIA ====================
+// ==================== REGISTRAR ASISTENCIA (CORREGIDO PARA TURNO NOCHE) ====================
 async function procesarRegistro(tipo, observacionInicial = "") {
     if (!empleadoActual) {
         mostrarMensaje("❌ Primero ingresa un DNI válido", 'error');
@@ -576,13 +576,15 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         return false;
     }
     
-        if (tipo === "SALIDA") {
-        // Para turno noche, no validamos que tenga entrada el mismo día
-        // La búsqueda se hará en el servidor (Apps Script)
+    // ========== IMPORTANTE: PARA SALIDA NO VALIDAMOS QUE TENGA ENTRADA HOY ==========
+    // Esto permite que trabajadores de turno noche marquen salida al día siguiente
+    if (tipo === "SALIDA") {
+        // Solo validamos que no tenga ya una salida registrada hoy
         if (yaRegistroSalida(dni)) {
             mostrarMensaje(`❌ Ya registraste SALIDA hoy`, 'error');
             return false;
         }
+        // NO validamos yaRegistroEntrada(dni) - la búsqueda se hace en el servidor
     }
     
     let esTarde = false;
