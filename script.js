@@ -576,11 +576,9 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         return false;
     }
     
-    if (tipo === "SALIDA") {
-        if (!yaRegistroEntrada(dni)) {
-            mostrarMensaje(`❌ No tienes ENTRADA registrada hoy`, 'error');
-            return false;
-        }
+        if (tipo === "SALIDA") {
+        // Para turno noche, no validamos que tenga entrada el mismo día
+        // La búsqueda se hará en el servidor (Apps Script)
         if (yaRegistroSalida(dni)) {
             mostrarMensaje(`❌ Ya registraste SALIDA hoy`, 'error');
             return false;
