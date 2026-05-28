@@ -136,22 +136,10 @@ function esDomingo() {
 }
 
 function esFeriado() {
-    // Lista de feriados en Perú (formato MM/DD)
     const feriados = [
-        "01/01", // Año Nuevo
-        "04/06", // Jueves Santo
-        "04/07", // Viernes Santo
-        "05/01", // Día del Trabajo
-        "06/29", // San Pedro y San Pablo
-        "07/28", // Fiestas Patrias
-        "07/29", // Fiestas Patrias
-        "08/30", // Santa Rosa de Lima
-        "10/08", // Combate de Angamos
-        "11/01", // Día de Todos los Santos
-        "12/08", // Inmaculada Concepción
-        "12/25"  // Navidad
+        "01/01", "04/06", "04/07", "05/01", "06/29",
+        "07/28", "07/29", "08/30", "10/08", "11/01", "12/08", "12/25"
     ];
-    
     const hoy = new Date();
     const mesDia = `${hoy.getMonth() + 1}/${hoy.getDate()}`.padStart(5, '0');
     return feriados.includes(mesDia);
@@ -163,23 +151,17 @@ function getHorarioLimite(tipoEmpleado, esEntrada = true, departamento = "", tur
     const esFeri = esFeriado();
     const depto = departamento.toUpperCase();
     
-    // ========== DOMINGOS Y FERIADOS ==========
     if (esDom || esFeri) {
-        // Turno noche de MAQUINA puede trabajar domingos (inician semana)
         if (depto === "MAQUINA" && turnoSeleccionado === "NOCHE") {
             return esEntrada ? "20:00:00" : "08:00:00";
         }
-        // Para otros departamentos, no hay restricción (día libre)
         return esEntrada ? "23:59:59" : "00:00:00";
     }
     
-    // ========== SÁBADOS ==========
     if (esSab) {
-        // OFICINA trabaja hasta 12:45
         if (depto === "OFICINA") {
             return esEntrada ? "08:00:00" : "12:45:00";
         }
-        // MAQUINA trabaja sábados normalmente
         if (depto === "MAQUINA") {
             if (turnoSeleccionado === "NOCHE") {
                 return esEntrada ? "20:00:00" : "08:00:00";
@@ -187,16 +169,13 @@ function getHorarioLimite(tipoEmpleado, esEntrada = true, departamento = "", tur
                 return esEntrada ? "08:00:00" : "20:00:00";
             }
         }
-        // MAESTRANZA, PRENSA, PRODUCCIÓN, ALMACÉN: sábados libres (extras)
         if (esEntrada) {
             return "08:00:00";
         } else {
-            return "00:00:00"; // Salida sin restricción
+            return "00:00:00";
         }
     }
     
-    // ========== LUNES A VIERNES ==========
-    // MAQUINA (doble turno)
     if (depto === "MAQUINA") {
         if (turnoSeleccionado === "NOCHE") {
             return esEntrada ? "20:00:00" : "08:00:00";
@@ -205,12 +184,10 @@ function getHorarioLimite(tipoEmpleado, esEntrada = true, departamento = "", tur
         }
     }
     
-    // OFICINA
     if (depto === "OFICINA") {
         return esEntrada ? "08:00:00" : "17:30:00";
     }
     
-    // MAESTRANZA, PRENSA, PRODUCCIÓN, ALMACÉN
     return esEntrada ? "08:00:00" : "19:30:00";
 }
 
@@ -458,6 +435,37 @@ async function generarReporteTardanzasDescargable() {
     }
 }
 
+async function generarReporteAusenciasDescargable() {
+    let fechaInicioElem = document.getElementById('fechaInicio');
+    let fechaFinElem = document.getElementById('fechaFin');
+    let empleadoFiltroElem = document.getElementById('empleadoFiltro');
+    
+    let fechaInicio = fechaInicioElem ? fechaInicioElem.value : "";
+    let fechaFin = fechaFinElem ? fechaFinElem.value : "";
+    let empleadoFiltro = empleadoFiltroElem ? empleadoFiltroElem.value : "todos";
+    
+    if (!fechaInicio || !fechaFin) {
+        alert("⚠️ Por favor selecciona un rango de fechas");
+        return;
+    }
+    
+    mostrarMensaje(`⏳ Generando reporte de ausencias...`, 'warning');
+    
+    try {
+        const url = `${SCRIPT_URL}?accion=reporteAusencias&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `reporte_ausencias_${fechaInicio}_al_${fechaFin}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        mostrarMensaje(`✅ Reporte de ausencias descargado`, 'success');
+    } catch (error) {
+        console.error("Error:", error);
+        mostrarMensaje("⚠️ Error al generar reporte", 'error');
+    }
+}
+
 function abrirGoogleSheets() {
     window.open('https://docs.google.com/spreadsheets', '_blank');
     mostrarMensaje("📂 Abre Google Sheets y busca las hojas de reporte", 'warning');
@@ -505,7 +513,6 @@ function guardarSalida(dni, hora) {
 function verificarHorario(tipoEmpleado, horaActual, esEntrada = true, departamento = "", turnoSeleccionado = "") {
     const horaLimite = getHorarioLimite(tipoEmpleado, esEntrada, departamento, turnoSeleccionado);
     
-    // Si no hay restricción de horario (00:00:00 o 23:59:59)
     if (horaLimite === "00:00:00" || horaLimite === "23:59:59") {
         return false;
     }
@@ -537,6 +544,52 @@ async function obtenerTurnoRegistroAnterior(dni) {
     } catch (error) {
         console.error("Error al obtener turno anterior:", error);
         return "";
+    }
+}
+
+// ==================== FUNCIÓN PARA VERIFICAR CUMPLEAÑOS ====================
+async function verificarCumpleanos(dni, nombre) {
+    try {
+        const response = await fetch(`${SCRIPT_URL}?accion=fechaNacimiento&dni=${encodeURIComponent(dni)}`);
+        const data = await response.json();
+        
+        if (data.fechaNacimiento) {
+            const fechaNac = data.fechaNacimiento;
+            let diaNac, mesNac;
+            
+            if (fechaNac.includes('/')) {
+                const partes = fechaNac.split('/');
+                diaNac = parseInt(partes[0]);
+                mesNac = parseInt(partes[1]);
+            } else if (fechaNac.includes('-')) {
+                const partes = fechaNac.split('-');
+                diaNac = parseInt(partes[2]);
+                mesNac = parseInt(partes[1]);
+            } else {
+                return;
+            }
+            
+            const hoy = new Date();
+            const diaHoy = hoy.getDate();
+            const mesHoy = hoy.getMonth() + 1;
+            
+            if (diaNac === diaHoy && mesNac === mesHoy) {
+                setTimeout(() => {
+                    if (typeof canvasConfetti !== 'undefined') {
+                        canvasConfetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, startVelocity: 15 });
+                        canvasConfetti({ particleCount: 100, spread: 100, origin: { y: 0.7 }, startVelocity: 10 });
+                    }
+                    alert(`🎉🎊 ¡FELIZ CUMPLEAÑOS, ${nombre}! 🎊🎉\n\nTe deseamos un excelente día lleno de bendiciones. 🎂🎈`);
+                    setTimeout(() => {
+                        if (typeof canvasConfetti !== 'undefined') {
+                            canvasConfetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } });
+                        }
+                    }, 500);
+                }, 500);
+            }
+        }
+    } catch (error) {
+        console.error("Error al verificar cumpleaños:", error);
     }
 }
 
@@ -600,6 +653,9 @@ async function buscarEmpleadoPorDNI(dni) {
         if (btnSalida) btnSalida.disabled = false;
         if (btnObs) btnObs.disabled = false;
         
+        // VERIFICAR CUMPLEAÑOS
+        verificarCumpleanos(dni, data.nombre);
+        
         if (yaRegistroEntrada(dni)) {
             if (yaRegistroSalida(dni)) {
                 mostrarMensaje(`⚠️ Ya completaste tu jornada de hoy`, 'warning');
@@ -621,7 +677,7 @@ async function buscarEmpleadoPorDNI(dni) {
     }
 }
 
-// ==================== REGISTRAR ASISTENCIA (CORREGIDO CON HORARIOS POR DEPARTAMENTO) ====================
+// ==================== REGISTRAR ASISTENCIA ====================
 async function procesarRegistro(tipo, observacionInicial = "") {
     if (!empleadoActual) {
         mostrarMensaje("❌ Primero ingresa un DNI válido", 'error');
@@ -646,7 +702,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
                               cargo.toUpperCase().includes("MAQUINA") || 
                               cargo.toUpperCase().includes("OP.MAQUINA");
     
-    // ========== PREGUNTAR TURNO (solo para MAQUINA) ==========
     if (tipo === "ENTRADA" && esOperarioMaquina && tieneRestriccion) {
         const turno = prompt("🔄 SELECCIONA TU TURNO:\n\n1 - TURNO DÍA (8:00 AM - 8:00 PM)\n2 - TURNO NOCHE (8:00 PM - 8:00 AM)\n\n(1 o 2)");
         if (turno === "1") {
@@ -661,7 +716,6 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // ========== VALIDACIÓN DE ENTRADA (PERMITE NUEVO INGRESO DESPUÉS DE 10 HORAS) ==========
     if (tipo === "ENTRADA") {
         const tieneEntradaHoy = yaRegistroEntrada(dni);
         
@@ -676,12 +730,10 @@ async function procesarRegistro(tipo, observacionInicial = "") {
                 const tiempoActual = horaActual * 60 + minActual;
                 let diferenciaMinutos = tiempoActual - tiempoUltima;
                 
-                // Ajustar si es después de medianoche
                 if (diferenciaMinutos < 0) {
                     diferenciaMinutos = (24 * 60 - tiempoUltima) + tiempoActual;
                 }
                 
-                // Permitir nueva entrada después de 10 horas (600 minutos)
                 if (diferenciaMinutos >= 600) {
                     console.log(`✅ Nuevo ingreso permitido después de ${Math.floor(diferenciaMinutos / 60)}h ${diferenciaMinutos % 60}m`);
                     localStorage.removeItem(`entrada_${dni}_${getFechaClave()}`);
@@ -710,13 +762,11 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // ========== VERIFICAR TARDANZA ==========
     let esTarde = false;
     let horaLimite = "";
     let tipoEmpleado = empleadoActual.tipoEmpleado || "OFICINA";
     
     if (tipo === "ENTRADA" && tieneRestriccion) {
-        // Usar la nueva función con departamento
         horaLimite = getHorarioLimite(tipoEmpleado, true, departamento, turnoSeleccionado);
         esTarde = verificarHorario(tipoEmpleado, horaActual, true, departamento, turnoSeleccionado);
         
@@ -757,12 +807,10 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // ========== VERIFICAR SALIDA ANTICIPADA ==========
     if (tipo === "SALIDA" && tieneRestriccion) {
         let esAnticipada = false;
         let horaMinima = "";
         
-        // Usar la nueva función con departamento
         horaMinima = getHorarioLimite(tipoEmpleado, false, departamento, turnoSeleccionado);
         esAnticipada = verificarHorario(tipoEmpleado, horaActual, false, departamento, turnoSeleccionado);
         
@@ -907,7 +955,6 @@ document.addEventListener('DOMContentLoaded', function() {
     btnCancelarSalida = document.getElementById('btnCancelarSalida');
     btnConfirmarSalida = document.getElementById('btnConfirmarSalida');
     
-    // ========== CONFIGURACIÓN DE TECLADO NUMÉRICO PARA DNI ==========
     if (dniInput) {
         dniInput.setAttribute('inputmode', 'numeric');
         dniInput.setAttribute('pattern', '[0-9]*');
@@ -950,36 +997,5 @@ document.addEventListener('DOMContentLoaded', function() {
     
     mostrarLogin();
 });
-
-async function generarReporteAusenciasDescargable() {
-    let fechaInicioElem = document.getElementById('fechaInicio');
-    let fechaFinElem = document.getElementById('fechaFin');
-    let empleadoFiltroElem = document.getElementById('empleadoFiltro');
-    
-    let fechaInicio = fechaInicioElem ? fechaInicioElem.value : "";
-    let fechaFin = fechaFinElem ? fechaFinElem.value : "";
-    let empleadoFiltro = empleadoFiltroElem ? empleadoFiltroElem.value : "todos";
-    
-    if (!fechaInicio || !fechaFin) {
-        alert("⚠️ Por favor selecciona un rango de fechas");
-        return;
-    }
-    
-    mostrarMensaje(`⏳ Generando reporte de ausencias...`, 'warning');
-    
-    try {
-        const url = `${SCRIPT_URL}?accion=reporteAusencias&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `reporte_ausencias_${fechaInicio}_al_${fechaFin}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        mostrarMensaje(`✅ Reporte de ausencias descargado`, 'success');
-    } catch (error) {
-        console.error("Error:", error);
-        mostrarMensaje("⚠️ Error al generar reporte", 'error');
-    }
-}
 
 console.log("✅ Sistema cargado correctamente");
