@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>KBA - Control de Asistencia | Confeti Profesional</title>
+    <title>KBA - Control de Asistencia | Confeti Premium</title>
     
-    <!-- ========== PWA - CONFIGURACIÓN PARA INSTALAR COMO APP ========== -->
+    <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="KBA Asistencia">
     <meta name="theme-color" content="#8B0000">
     <meta name="mobile-web-app-capable" content="yes">
-    
-    <!-- Librería canvas-confetti (opcional pero usamos nuestra propia animación para más control) -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     
     <style>
         * {
@@ -34,7 +31,7 @@
             position: relative;
         }
 
-        /* ========== LLUVIA DE CONFETI (CANVAS PROPIO) ========== */
+        /* CANVAS CONFETI (capa superior, sin interferir clicks) */
         #confetti-canvas {
             position: fixed;
             top: 0;
@@ -42,11 +39,10 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 999;
-            transition: opacity 0.3s;
+            z-index: 1000;
         }
 
-        /* Pantalla de login mejorada */
+        /* Pantalla de login */
         .login-container {
             display: flex;
             justify-content: center;
@@ -58,7 +54,6 @@
             left: 0;
             width: 100%;
             z-index: 10000;
-            backdrop-filter: blur(2px);
         }
         .login-card {
             background: white;
@@ -69,16 +64,11 @@
             width: 90%;
             box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
             border-top: 6px solid #ff9f4a;
-            transition: transform 0.2s;
         }
         .login-card h2 {
             color: #8B0000;
             margin-bottom: 8px;
             font-size: 2rem;
-        }
-        .login-card p {
-            color: #5a6e7c;
-            margin-bottom: 20px;
         }
         .btn-ingresar {
             background: #8B0000;
@@ -90,7 +80,6 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
-            box-shadow: 0 4px 12px rgba(139,0,0,0.3);
         }
         .btn-ingresar:hover {
             background: #a00000;
@@ -100,10 +89,9 @@
             font-size: 0.8rem;
             margin-top: 20px;
             color: #87CEEB;
-            font-weight: 500;
         }
 
-        /* Contenedor principal App */
+        /* Contenedor principal APP */
         .app-container {
             max-width: 700px;
             width: 100%;
@@ -111,17 +99,14 @@
             border-radius: 48px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
             overflow: hidden;
-            backdrop-filter: blur(1px);
-            transition: all 0.2s;
             position: relative;
             z-index: 10;
         }
-
         .inner-content {
             padding: 1.8rem 2rem 2rem;
         }
 
-        /* Barra de usuario */
+        /* Barra usuario */
         .user-bar {
             display: flex;
             justify-content: space-between;
@@ -137,7 +122,6 @@
             font-size: 0.85rem;
             font-weight: 600;
             color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .btn-salir {
             background: #8B0000;
@@ -146,23 +130,16 @@
             padding: 6px 18px;
             border-radius: 40px;
             cursor: pointer;
-            font-size: 0.8rem;
             font-weight: bold;
-            transition: 0.2s;
-        }
-        .btn-salir:hover {
-            background: #6d0000;
-            transform: scale(0.96);
         }
 
-        /* Panel Admin */
+        /* Admin panel */
         .admin-panel {
             background: linear-gradient(135deg, #eef7fc, #dff0f5);
             padding: 18px;
             border-radius: 32px;
             margin-bottom: 25px;
             border-left: 6px solid #8B0000;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         .admin-panel h3 {
             margin: 0 0 12px 0;
@@ -183,11 +160,10 @@
             align-items: center;
             margin-top: 8px;
         }
-        .fecha-inputs input, .fecha-inputs select {
+        .fecha-inputs input {
             padding: 8px 12px;
             border-radius: 40px;
             border: 1px solid #b9d0dd;
-            font-size: 0.85rem;
         }
         .btn-semana {
             background: #87CEEB;
@@ -195,7 +171,6 @@
             padding: 8px 14px;
             border-radius: 30px;
             cursor: pointer;
-            font-weight: 500;
         }
         .botones-reportes {
             display: flex;
@@ -208,18 +183,13 @@
             padding: 6px 14px;
             border: none;
             border-radius: 40px;
-            font-size: 0.8rem;
             cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-reporte:hover {
-            background: #a52222;
         }
 
         /* KBA header */
         .kba-title {
             text-align: center;
-            margin: 5px 0 5px;
+            margin: 5px 0;
         }
         .kba-title h1 {
             display: inline-block;
@@ -231,7 +201,6 @@
             text-align: center;
             font-size: 0.85rem;
             color: #2c5f7a;
-            font-weight: 500;
             margin-bottom: 10px;
         }
         .credit-line {
@@ -239,17 +208,8 @@
             font-size: 0.7rem;
             margin-bottom: 20px;
             background: #fff2e0;
-            display: inline-block;
-            width: 100%;
-            padding: 4px;
             border-radius: 60px;
-        }
-        .credit-text {
-            background: linear-gradient(90deg, #8B0000, #ff9642);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            font-weight: bold;
+            padding: 4px;
         }
 
         /* DNI field */
@@ -276,11 +236,9 @@
             border: 1px solid #cbdbe2;
             font-size: 1rem;
             text-align: center;
-            letter-spacing: 1px;
             font-family: monospace;
-            background: white;
         }
-        .verify-btn-mini {
+        .verify-btn {
             background: #1f6e5c;
             border: none;
             padding: 10px 24px;
@@ -308,12 +266,11 @@
             border-radius: 50%;
             object-fit: cover;
             background: #ccc;
-            border: 2px solid white;
-            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
         }
         .datos-empleado h3 {
             color: #0b3b4f;
             margin-bottom: 5px;
+            font-size: 1.2rem;
         }
         .tipo-badge {
             background: #ffcd94;
@@ -323,8 +280,13 @@
             font-weight: bold;
             display: inline-block;
         }
+        .horario-info {
+            font-size: 0.7rem;
+            margin-top: 6px;
+            color: #2d6a4f;
+        }
 
-        /* Botones asistencia */
+        /* Botones de marcación */
         .botones {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -339,27 +301,22 @@
             font-size: 0.9rem;
             cursor: pointer;
             transition: 0.2s;
-            background: white;
-            border: 1px solid #cce2ed;
-            color: #1f5068;
         }
         .entrada {
             background: #28965c;
-            color: white !important;
-            border: none;
+            color: white;
         }
         .salida {
             background: #e3645f;
-            color: white !important;
+            color: white;
         }
         .observacion {
             background: #f4a261;
-            color: white !important;
+            color: white;
         }
         button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
         }
         .status {
             background: #e2f0f7;
@@ -375,6 +332,8 @@
             margin-top: 25px;
             color: #658194;
         }
+
+        /* modales */
         .modal {
             display: none;
             position: fixed;
@@ -399,36 +358,47 @@
             margin: 12px 0;
             padding: 10px;
             border-radius: 20px;
-            border: 1px solid #ccc;
         }
         .modal-buttons {
             display: flex;
             gap: 10px;
             justify-content: flex-end;
         }
-
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 80px;
+            z-index: 10002;
+            font-weight: bold;
+            white-space: nowrap;
+        }
         @media (max-width: 550px) {
             .inner-content {
                 padding: 1rem;
             }
+            .toast-msg { white-space: normal; width: 90%; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <!-- CANVAS CONFETI (lluvia hasta marcar asistencia) -->
     <canvas id="confetti-canvas"></canvas>
 
-    <!-- Pantalla Login -->
+    <!-- Login -->
     <div id="loginScreen" class="login-container">
         <div class="login-card">
-            <div class="empresa-header" style="display:flex; justify-content:center; gap:8px;">
+            <div style="display:flex; justify-content:center; gap:8px;">
                 <span style="font-size:2rem;">⚡</span>
                 <h2>KBA</h2>
             </div>
             <p>INDUSTRIAS ELECTRICAS KBA SAC</p>
             <p style="font-size: 0.9rem;">Control de Asistencia</p>
-            <button class="btn-ingresar" onclick="mostrarLogin()">👉 INGRESAR AL SISTEMA</button>
+            <button class="btn-ingresar" onclick="ingresarAlSistema()">👉 INGRESAR AL SISTEMA</button>
             <div class="empresa-nombre">⚡ KBA | Calidad y Servicio ⚡</div>
         </div>
     </div>
@@ -437,14 +407,12 @@
     <div id="appContent" style="display: none;">
         <div class="app-container">
             <div class="inner-content">
-                <!-- Barra usuario -->
                 <div class="user-bar">
-                    <span class="user-info" id="userInfo">👤 Usuario</span>
-                    <button class="btn-salir" onclick="cerrarSesion()">🚪 Salir</button>
+                    <span class="user-info" id="userInfo">👤 ADMIN - KBA</span>
+                    <button class="btn-salir" onclick="cerrarSesionGlobal()">🚪 Salir</button>
                 </div>
 
-                <!-- Admin Panel -->
-                <div id="adminPanel" class="admin-panel" style="display: none;">
+                <div id="adminPanel" class="admin-panel">
                     <h3>📊 PANEL ADMINISTRADOR - KBA</h3>
                     <div class="fecha-rango">
                         <label>📅 RANGO DE FECHAS:</label>
@@ -452,15 +420,15 @@
                             <input type="date" id="fechaInicio">
                             <span>→</span>
                             <input type="date" id="fechaFin">
-                            <button class="btn-semana" onclick="establecerFechaActual()">📆 Semana</button>
-                            <button class="btn-semana" onclick="establecerMesActual()">📅 Mes</button>
+                            <button class="btn-semana" onclick="alert('Semana actual seleccionada')">📆 Semana</button>
+                            <button class="btn-semana" onclick="alert('Mes actual')">📅 Mes</button>
                         </div>
                     </div>
                     <div class="botones-reportes">
-                        <button class="btn-reporte" onclick="generarReporteExcel()">📊 Reporte CSV</button>
-                        <button class="btn-reporte" onclick="generarFaltas()">⚠️ Faltas</button>
-                        <button class="btn-reporte" onclick="generarTardanzas()">⏰ Tardanzas</button>
-                        <button class="btn-reporte" onclick="abrirSheetsMock()">📂 Google Sheets</button>
+                        <button class="btn-reporte" onclick="alert('Reporte CSV simulado')">📊 Reporte CSV</button>
+                        <button class="btn-reporte" onclick="alert('Reporte faltas')">⚠️ Faltas</button>
+                        <button class="btn-reporte" onclick="alert('Reporte tardanzas')">⏰ Tardanzas</button>
+                        <button class="btn-reporte" onclick="alert('Abrir Google Sheets mock')">📂 Google Sheets</button>
                     </div>
                 </div>
 
@@ -470,34 +438,34 @@
                 </div>
                 <div class="sub">Control de Asistencia - INDUSTRIAS ELECTRICAS KBA SAC</div>
                 <div class="credit-line">
-                    <span class="credit-text">✨ Aplicativo desarrollado por Edward O. © 2026 ✨</span>
+                    <span style="background: linear-gradient(90deg,#8B0000,#ff9642); -webkit-background-clip:text; background-clip:text; color:transparent;">✨ Aplicativo desarrollado por Edward O. © 2026 ✨</span>
                 </div>
 
-                <!-- DNI y verificación -->
+                <!-- DNI con verificación manual -->
                 <div class="dni-field">
                     <label>🆔 Ingresa tu DNI</label>
-                    <input type="text" id="dni" placeholder="45290457" autocomplete="off" inputmode="numeric" maxlength="8" value="45290457">
-                    <button class="verify-btn-mini" id="verifyDniBtn">Verificar</button>
+                    <input type="text" id="dniInput" placeholder="45290457" autocomplete="off" inputmode="numeric" maxlength="8" value="45290457">
+                    <button class="verify-btn" id="btnVerificarDni">Verificar</button>
                 </div>
 
-                <!-- Info empleado -->
+                <!-- INFO EMPLEADO (se muestra tras verificar DNI correcto) -->
                 <div id="infoEmpleado" class="info-empleado" style="display: none;">
-                    <img id="fotoEmpleado" class="foto-empleado" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle fill='%2387CEEB' cx='50' cy='50' r='45'/%3E%3Ctext x='50' y='67' text-anchor='middle' fill='white' font-size='40' dy='.3em'%3E👤%3C/text%3E%3C/svg%3E">
+                    <img class="foto-empleado" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle fill='%2387CEEB' cx='50' cy='50' r='45'/%3E%3Ctext x='50' y='67' text-anchor='middle' fill='white' font-size='40' dy='.3em'%3E👤%3C/text%3E%3C/svg%3E">
                     <div class="datos-empleado">
                         <h3 id="nombreEmpleado">SALAZAR BAUTISTA, DENIS MIGUEL</h3>
                         <p id="deptoEmpleado">📁 MAQUINA</p>
                         <p id="cargoEmpleado">💼 OP. MAQUINA</p>
                         <span id="tipoEmpleado" class="tipo-badge">OPERATIVO (11h)</span>
-                        <div id="horarioInfo" class="horario-info" style="font-size:0.7rem;">Turno DÍA 8:00-20:00 / NOCHE 20:00-8:00</div>
+                        <div id="horarioInfo" class="horario-info">Turno DÍA 8:00-20:00 / NOCHE 20:00-8:00</div>
                     </div>
                 </div>
 
-                <!-- Botones de marcación -->
+                <!-- Botones de acción -->
                 <div class="botones">
                     <button class="entrada" id="btnEntrada" disabled>✅ MARCAR ENTRADA</button>
                     <button class="salida" id="btnSalida" disabled>🏁 MARCAR SALIDA</button>
-                    <button class="observacion" id="btnObs" disabled>📌 AGREGAR OBSERVACIÓN</button>
-                    <button class="btn-reporte" onclick="generarReporteAusencias()" style="background:#4CAF50;">📋 Reporte Ausencias</button>
+                    <button class="observacion" id="btnObservacion" disabled>📌 AGREGAR OBSERVACIÓN</button>
+                    <button class="btn-reporte" id="btnReporteAusencias" style="background:#4CAF50;">📋 Reporte Ausencias</button>
                 </div>
 
                 <div id="mensajeStatus" class="status">📍 Verifica tu DNI para habilitar marcación</div>
@@ -506,242 +474,320 @@
         </div>
     </div>
 
-    <!-- Modales -->
-    <div id="modalTarde" class="modal"><div class="modal-content"><h3>⏰ LLEGADA TARDE</h3><textarea id="justificacionTarde" placeholder="Motivo..."></textarea><div class="modal-buttons"><button id="btnCancelarTarde">Cancelar</button><button id="btnConfirmarTarde">Justificar</button></div></div></div>
-    <div id="modalSalida" class="modal"><div class="modal-content"><h3>⏰ SALIDA ANTICIPADA</h3><textarea id="justificacionSalida" placeholder="Motivo..."></textarea><div class="modal-buttons"><button id="btnCancelarSalida">Cancelar</button><button id="btnConfirmarSalida">Justificar</button></div></div></div>
+    <!-- MODALES -->
+    <div id="modalTarde" class="modal"><div class="modal-content"><h3>⏰ LLEGADA TARDE</h3><textarea id="justificacionTarde" placeholder="Motivo de llegada tarde..."></textarea><div class="modal-buttons"><button id="cancelTarde">Cancelar</button><button id="confirmTarde">Justificar y Entrar</button></div></div></div>
+    <div id="modalSalida" class="modal"><div class="modal-content"><h3>⏰ SALIDA ANTICIPADA</h3><textarea id="justificacionSalida" placeholder="Motivo de salida anticipada..."></textarea><div class="modal-buttons"><button id="cancelSalida">Cancelar</button><button id="confirmSalida">Justificar y Salir</button></div></div></div>
 
     <script>
-        // ========== CONFETI PREMIUM (LLUVIA HASTA MARCAR ASISTENCIA) ==========
-        let confettiActive = true;
-        let asistenciaMarcada = false;    // controla si ya se registró entrada o salida alguna vez (detiene confeti)
-        let canvasConf = document.getElementById('confetti-canvas');
-        let ctxConf = canvasConf.getContext('2d');
+        // -------------------- CONFETI (LLUVIA HASTA MARCAR ASISTENCIA) --------------------
+        let confettiActivo = true;
+        let asistenciaYaRegistrada = false;   // si ya marcó entrada o salida (detiene confeti)
+        const canvas = document.getElementById('confetti-canvas');
+        let ctx = canvas.getContext('2d');
         let particles = [];
-        let animFrame = null;
+        let animId = null;
 
-        function resizeCanvas() {
-            canvasConf.width = window.innerWidth;
-            canvasConf.height = window.innerHeight;
+        function resizeCanvasConf() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        window.addEventListener('resize', () => { resizeCanvas(); if(confettiActive) initParticles(180); });
 
-        class Particle {
+        class ConfettiParticle {
             constructor() {
-                this.x = Math.random() * canvasConf.width;
-                this.y = Math.random() * canvasConf.height - canvasConf.height;
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
                 this.size = Math.random() * 7 + 3;
                 this.speedY = Math.random() * 2.5 + 1.8;
                 this.speedX = (Math.random() - 0.5) * 1.2;
                 this.color = `hsl(${Math.random() * 360}, 85%, 60%)`;
-                this.rotation = Math.random() * 360;
-                this.rotSpeed = (Math.random() - 0.5) * 0.1;
+                this.rot = Math.random() * 360;
+                this.rotSpd = (Math.random() - 0.5) * 0.1;
             }
             update() {
                 this.y += this.speedY;
                 this.x += this.speedX;
-                this.rotation += this.rotSpeed;
-                if (this.y > canvasConf.height + 40) {
+                this.rot += this.rotSpd;
+                if (this.y > canvas.height + 50) {
                     this.y = -30;
-                    this.x = Math.random() * canvasConf.width;
+                    this.x = Math.random() * canvas.width;
                     this.color = `hsl(${Math.random() * 360}, 85%, 65%)`;
                 }
-                if (this.x > canvasConf.width + 50) this.x = -50;
-                if (this.x < -50) this.x = canvasConf.width + 50;
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
             }
-            draw(ctx) {
+            draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.rotate(this.rot * Math.PI / 180);
                 ctx.fillStyle = this.color;
                 ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 0.7);
                 ctx.restore();
             }
         }
-        function initParticles(count = 200) {
+
+        function initConfetti(count = 200) {
             particles = [];
-            for (let i = 0; i < count; i++) particles.push(new Particle());
-        }
-        function animateConfetti() {
-            if (!confettiActive || !canvasConf || asistenciaMarcada) {
-                if (ctxConf) ctxConf.clearRect(0, 0, canvasConf.width, canvasConf.height);
-                if (animFrame) cancelAnimationFrame(animFrame);
-                return;
-            }
-            ctxConf.clearRect(0, 0, canvasConf.width, canvasConf.height);
-            for (let p of particles) { p.update(); p.draw(ctxConf); }
-            animFrame = requestAnimationFrame(animateConfetti);
-        }
-        function startConfettiRain() {
-            if (asistenciaMarcada) return;
-            confettiActive = true;
-            resizeCanvas();
-            initParticles(210);
-            if (animFrame) cancelAnimationFrame(animFrame);
-            animateConfetti();
-        }
-        function stopConfettiForever() {
-            if (!asistenciaMarcada) {
-                asistenciaMarcada = true;
-                confettiActive = false;
-                if (animFrame) cancelAnimationFrame(animFrame);
-                if (ctxConf) ctxConf.clearRect(0, 0, canvasConf.width, canvasConf.height);
-                // Pequeña ráfaga final de canvas-confetti para despedida elegante
-                canvasConfetti({ particleCount: 180, spread: 80, origin: { y: 0.6 }, colors: ['#ff4d6d', '#ffb347', '#4c9aff'] });
-                showToast("🎉 ¡Asistencia registrada! La lluvia de confeti se detiene. 🎉", false);
-            }
-        }
-        function showToast(msg, isErr) {
-            let old = document.querySelector('.toast-msg-custom');
-            if(old) old.remove();
-            let div = document.createElement('div');
-            div.className = 'toast-msg-custom';
-            div.innerText = msg;
-            div.style.position = 'fixed';
-            div.style.bottom = '20px';
-            div.style.left = '50%';
-            div.style.transform = 'translateX(-50%)';
-            div.style.backgroundColor = isErr ? '#b91c1c' : '#1f6e5c';
-            div.style.color = 'white';
-            div.style.padding = '10px 24px';
-            div.style.borderRadius = '80px';
-            div.style.zIndex = '10002';
-            div.style.fontWeight = 'bold';
-            div.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-            document.body.appendChild(div);
-            setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 2600);
+            for (let i = 0; i < count; i++) particles.push(new ConfettiParticle());
         }
 
-        // ========== LÓGICA DE ASISTENCIA Y SISTEMA ==========
-        let currentUser = { dni: "45290457", nombre: "SALAZAR BAUTISTA, DENIS MIGUEL", depto: "MAQUINA", cargo: "OP. MAQUINA", tipo: "OPERATIVO (11h)" };
-        let registros = JSON.parse(localStorage.getItem('kba_asistencia')) || [];
-        let userLogeado = null; // admin simple
-        
-        function mostrarLogin() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
-            userLogeado = { role: 'admin' }; // para admin visible en DEMO (mostramos panel)
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('userInfo').innerText = `👑 ADMIN - KBA`;
-            // precargar datos del empleado fijo
-            document.getElementById('infoEmpleado').style.display = 'flex';
-            document.getElementById('nombreEmpleado').innerText = currentUser.nombre;
-            document.getElementById('deptoEmpleado').innerText = `📁 ${currentUser.depto}`;
-            document.getElementById('cargoEmpleado').innerText = `💼 ${currentUser.cargo}`;
-            document.getElementById('tipoEmpleado').innerText = currentUser.tipo;
-            document.getElementById('dni').value = currentUser.dni;
-            habilitarBotones(true);
-            // IMPORTANTE: Iniciamos confeti sin marcar asistencia aún
-            asistenciaMarcada = false;
-            confettiActive = true;
-            startConfettiRain();
+        function animateConfetti() {
+            if (!confettiActivo || asistenciaYaRegistrada || !canvas) {
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (animId) cancelAnimationFrame(animId);
+                return;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let p of particles) {
+                p.update();
+                p.draw();
+            }
+            animId = requestAnimationFrame(animateConfetti);
         }
-        function cerrarSesion() {
-            asistenciaMarcada = false;
-            confettiActive = false;
-            if(animFrame) cancelAnimationFrame(animFrame);
-            document.getElementById('appContent').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'flex';
-            userLogeado = null;
+
+        function startConfettiRain() {
+            if (asistenciaYaRegistrada) return;
+            confettiActivo = true;
+            resizeCanvasConf();
+            initConfetti(210);
+            if (animId) cancelAnimationFrame(animId);
+            animateConfetti();
         }
+
+        function stopConfettiPermanently() {
+            if (!asistenciaYaRegistrada) {
+                asistenciaYaRegistrada = true;
+                confettiActivo = false;
+                if (animId) cancelAnimationFrame(animId);
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // pequena ráfaga final
+                if (typeof canvasConfetti === 'function') {
+                    canvasConfetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ff4d6d', '#ffb347'] });
+                }
+                mostrarToast("🎉 Asistencia registrada. Confeti finalizado. 🎉", false);
+            }
+        }
+
+        function mostrarToast(msg, error = false) {
+            let existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+            let div = document.createElement('div');
+            div.className = 'toast-msg';
+            div.innerText = msg;
+            div.style.backgroundColor = error ? '#b91c1c' : '#1f6e5c';
+            div.style.color = 'white';
+            div.style.fontWeight = 'bold';
+            document.body.appendChild(div);
+            setTimeout(() => {
+                div.style.opacity = '0';
+                setTimeout(() => div.remove(), 500);
+            }, 2800);
+        }
+
+        // -------------------- LÓGICA PRINCIPAL ASISTENCIA --------------------
+        const EMPLEADO_VALIDO = {
+            dni: "45290457",
+            nombre: "SALAZAR BAUTISTA, DENIS MIGUEL",
+            depto: "MAQUINA",
+            cargo: "OP. MAQUINA",
+            tipo: "OPERATIVO (11h)",
+            horario: "Turno DÍA 8:00-20:00 / NOCHE 20:00-8:00"
+        };
+
+        let registrosAsistencia = JSON.parse(localStorage.getItem('kba_asistencia_registros')) || [];
+
         function habilitarBotones(estado) {
             document.getElementById('btnEntrada').disabled = !estado;
             document.getElementById('btnSalida').disabled = !estado;
-            document.getElementById('btnObs').disabled = !estado;
+            document.getElementById('btnObservacion').disabled = !estado;
         }
-        function verificarDNI() {
-            let dniVal = document.getElementById('dni').value.trim();
-            if(dniVal === currentUser.dni) {
-                showToast("✅ DNI Válido - Bienvenido", false);
-                document.getElementById('infoEmpleado').style.display = 'flex';
-                habilitarBotones(true);
-            } else {
-                showToast("❌ DNI incorrecto. Acceso solo para personal autorizado.", true);
-                habilitarBotones(false);
-                document.getElementById('infoEmpleado').style.display = 'none';
-            }
-        }
-        // marcar asistencia (detiene confeti solo primera vez)
-        function marcarAsistencia(tipo, justificacion = "") {
-            let dniOk = document.getElementById('dni').value.trim();
-            if(dniOk !== currentUser.dni) { showToast("Verifica tu DNI primero", true); return; }
-            let now = new Date();
-            let fecha = now.toISOString().slice(0,10);
-            let hora = now.toLocaleTimeString('es-PE');
-            let registro = { tipo, fecha, hora, justificacion, empleado: currentUser.nombre, timestamp: now.getTime() };
-            registros.push(registro);
-            localStorage.setItem('kba_asistencia', JSON.stringify(registros));
-            showToast(`✅ ${tipo} registrada a las ${hora}`, false);
-            // DETENER CONFETI SI ES EL PRIMER REGISTRO DE ASISTENCIA (Entrada o Salida)
-            if (!asistenciaMarcada) {
-                stopConfettiForever();
-            }
-        }
-        function marcarEntrada() {
-            let horaActual = new Date().getHours();
-            let justNeeded = (horaActual >= 8 && horaActual <= 9) ? false : true; // simulación si es después de las 9:00 se considera tarde
-            if(justNeeded && horaActual > 9) {
-                let modal = document.getElementById('modalTarde');
-                modal.style.display = 'flex';
-                document.getElementById('btnConfirmarTarde').onclick = () => {
-                    let just = document.getElementById('justificacionTarde').value;
-                    if(!just) { showToast("Debe escribir justificación", true); return; }
-                    marcarAsistencia("ENTRADA (Tarde)", just);
-                    modal.style.display = 'none';
-                    document.getElementById('justificacionTarde').value = '';
-                };
-                document.getElementById('btnCancelarTarde').onclick = () => { modal.style.display = 'none'; };
-                return;
-            }
-            marcarAsistencia("ENTRADA");
-        }
-        function marcarSalida() {
-            let horaActual = new Date().getHours();
-            if(horaActual < 17) {
-                let modalSal = document.getElementById('modalSalida');
-                modalSal.style.display = 'flex';
-                document.getElementById('btnConfirmarSalida').onclick = () => {
-                    let just = document.getElementById('justificacionSalida').value;
-                    if(!just) { showToast("Justifique salida anticipada", true); return; }
-                    marcarAsistencia("SALIDA ANTICIPADA", just);
-                    modalSal.style.display = 'none';
-                    document.getElementById('justificacionSalida').value = '';
-                };
-                document.getElementById('btnCancelarSalida').onclick = () => { modalSal.style.display = 'none'; };
-                return;
-            }
-            marcarAsistencia("SALIDA");
-        }
-        function agregarObservacion() { showToast("📝 Función de observación guardada (demo)", false); }
-        function generarReporteAusencias() { showToast("📋 Reporte de ausencias generado en consola", false); alert("Reporte Ausencias: sin faltas recientes."); }
-        function generarReporteExcel() { showToast("📊 Reporte CSV descargable (simulado)", false); }
-        function generarFaltas() { alert("Reporte Faltas: Sin incidencias graves."); }
-        function generarTardanzas() { alert("Reporte Tardanzas: Justificaciones pendientes 0."); }
-        function abrirSheetsMock() { alert("🔗 Integración con Google Sheets - próximamente"); }
-        function establecerFechaActual() { showToast("Semana actual seleccionada", false); }
-        function establecerMesActual() { showToast("Mes actual seleccionado", false); }
 
-        // Asignar eventos
-        document.getElementById('verifyDniBtn').addEventListener('click', verificarDNI);
-        document.getElementById('btnEntrada').addEventListener('click', marcarEntrada);
-        document.getElementById('btnSalida').addEventListener('click', marcarSalida);
-        document.getElementById('btnObs').addEventListener('click', agregarObservacion);
-        window.mostrarLogin = mostrarLogin;
-        window.cerrarSesion = cerrarSesion;
-        window.generarReporteAusencias = generarReporteAusencias;
-        window.generarReporteExcel = generarReporteExcel;
-        window.generarFaltas = generarFaltas;
-        window.generarTardanzas = generarTardanzas;
-        window.abrirSheetsMock = abrirSheetsMock;
-        window.establecerFechaActual = establecerFechaActual;
-        window.establecerMesActual = establecerMesActual;
-        // inicializar confeti detenido hasta login
-        asistenciaMarcada = false;
-        confettiActive = false;
-        startConfettiRain = startConfettiRain.bind(this);
-        // pero tras login se activa
+        function mostrarInfoEmpleado(mostrar) {
+            const divInfo = document.getElementById('infoEmpleado');
+            if (mostrar) {
+                divInfo.style.display = 'flex';
+                document.getElementById('nombreEmpleado').innerText = EMPLEADO_VALIDO.nombre;
+                document.getElementById('deptoEmpleado').innerHTML = `📁 ${EMPLEADO_VALIDO.depto}`;
+                document.getElementById('cargoEmpleado').innerHTML = `💼 ${EMPLEADO_VALIDO.cargo}`;
+                document.getElementById('tipoEmpleado').innerText = EMPLEADO_VALIDO.tipo;
+                document.getElementById('horarioInfo').innerText = EMPLEADO_VALIDO.horario;
+            } else {
+                divInfo.style.display = 'none';
+            }
+        }
+
+        function verificarDNI() {
+            const dniIngresado = document.getElementById('dniInput').value.trim();
+            if (dniIngresado === EMPLEADO_VALIDO.dni) {
+                mostrarToast("✅ DNI correcto. Bienvenido " + EMPLEADO_VALIDO.nombre, false);
+                mostrarInfoEmpleado(true);
+                habilitarBotones(true);
+                document.getElementById('mensajeStatus').innerHTML = "✅ DNI verificado. Puedes marcar asistencia.";
+            } else {
+                mostrarToast("❌ DNI incorrecto. Acceso solo para personal autorizado.", true);
+                mostrarInfoEmpleado(false);
+                habilitarBotones(false);
+                document.getElementById('mensajeStatus').innerHTML = "⚠️ DNI inválido. Verifica tus credenciales.";
+            }
+        }
+
+        function registrarAsistencia(tipo, justificacion = "") {
+            const dniActual = document.getElementById('dniInput').value.trim();
+            if (dniActual !== EMPLEADO_VALIDO.dni) {
+                mostrarToast("Primero verifica tu DNI correcto", true);
+                return false;
+            }
+            const ahora = new Date();
+            const fechaStr = ahora.toISOString().slice(0,10);
+            const horaStr = ahora.toLocaleTimeString('es-PE');
+            const registro = {
+                id: Date.now(),
+                empleado: EMPLEADO_VALIDO.nombre,
+                dni: EMPLEADO_VALIDO.dni,
+                tipo: tipo,
+                fecha: fechaStr,
+                hora: horaStr,
+                justificacion: justificacion,
+                timestamp: ahora.getTime()
+            };
+            registrosAsistencia.push(registro);
+            localStorage.setItem('kba_asistencia_registros', JSON.stringify(registrosAsistencia));
+            mostrarToast(`✅ ${tipo} registrada a las ${horaStr}`, false);
+            
+            // DETENER CONFETI si es la primera vez que se marca asistencia (Entrada o Salida)
+            if (!asistenciaYaRegistrada) {
+                stopConfettiPermanently();
+            }
+            return true;
+        }
+
+        function marcarEntrada() {
+            const horaActual = new Date().getHours();
+            // Simulación de justificación si es después de las 9:00 am (tarde)
+            if (horaActual >= 9 && horaActual <= 11) {
+                const modal = document.getElementById('modalTarde');
+                modal.style.display = 'flex';
+                const confirmBtn = document.getElementById('confirmTarde');
+                const cancelBtn = document.getElementById('cancelTarde');
+                const textarea = document.getElementById('justificacionTarde');
+                
+                const handlerConfirm = () => {
+                    const just = textarea.value.trim();
+                    if (!just) { mostrarToast("Debe escribir una justificación", true); return; }
+                    registrarAsistencia("ENTRADA (TARDANZA)", just);
+                    modal.style.display = 'none';
+                    textarea.value = '';
+                    cleanup();
+                };
+                const handlerCancel = () => {
+                    modal.style.display = 'none';
+                    textarea.value = '';
+                    cleanup();
+                };
+                const cleanup = () => {
+                    confirmBtn.removeEventListener('click', handlerConfirm);
+                    cancelBtn.removeEventListener('click', handlerCancel);
+                };
+                confirmBtn.addEventListener('click', handlerConfirm);
+                cancelBtn.addEventListener('click', handlerCancel);
+                return;
+            }
+            registrarAsistencia("ENTRADA");
+        }
+
+        function marcarSalida() {
+            const horaActual = new Date().getHours();
+            if (horaActual < 17) {
+                const modalSal = document.getElementById('modalSalida');
+                modalSal.style.display = 'flex';
+                const confirmBtn = document.getElementById('confirmSalida');
+                const cancelBtn = document.getElementById('cancelSalida');
+                const textarea = document.getElementById('justificacionSalida');
+                const handlerConfirm = () => {
+                    const just = textarea.value.trim();
+                    if (!just) { mostrarToast("Debe justificar salida anticipada", true); return; }
+                    registrarAsistencia("SALIDA ANTICIPADA", just);
+                    modalSal.style.display = 'none';
+                    textarea.value = '';
+                    cleanup();
+                };
+                const handlerCancel = () => {
+                    modalSal.style.display = 'none';
+                    textarea.value = '';
+                    cleanup();
+                };
+                const cleanup = () => {
+                    confirmBtn.removeEventListener('click', handlerConfirm);
+                    cancelBtn.removeEventListener('click', handlerCancel);
+                };
+                confirmBtn.addEventListener('click', handlerConfirm);
+                cancelBtn.addEventListener('click', handlerCancel);
+                return;
+            }
+            registrarAsistencia("SALIDA");
+        }
+
+        function agregarObservacion() {
+            const obs = prompt("📝 Escribe tu observación (ej: retraso justificado, incidencia):");
+            if (obs && obs.trim()) {
+                registrarAsistencia("OBSERVACIÓN", obs.trim());
+            } else if (obs !== null) mostrarToast("Observación vacía no guardada", true);
+        }
+
+        function reporteAusencias() {
+            const hoy = new Date().toISOString().slice(0,10);
+            const registrosHoy = registrosAsistencia.filter(r => r.fecha === hoy);
+            if (registrosHoy.length === 0) {
+                alert("📋 Reporte Ausencias: No se han registrado asistencias hoy. Ausencia total.");
+            } else {
+                let msj = `📋 Asistencias hoy (${hoy}):\n`;
+                registrosHoy.forEach(r => msj += `- ${r.tipo} a las ${r.hora} ${r.justificacion ? `(Just: ${r.justificacion})` : ''}\n`);
+                alert(msj);
+            }
+        }
+
+        // Funciones globales UI
+        function ingresarAlSistema() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            // Reiniciamos estado de confeti, pero solo si aun no se ha registrado asistencia luego del login
+            asistenciaYaRegistrada = false;
+            confettiActivo = true;
+            startConfettiRain();
+            // Se resetea la interfaz
+            document.getElementById('dniInput').value = "45290457";
+            mostrarInfoEmpleado(false);
+            habilitarBotones(false);
+            document.getElementById('mensajeStatus').innerHTML = "📍 Verifica tu DNI para habilitar marcación";
+        }
+
+        function cerrarSesionGlobal() {
+            asistenciaYaRegistrada = false;
+            confettiActivo = false;
+            if (animId) cancelAnimationFrame(animId);
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('appContent').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        // Eventos y carga inicial
         window.addEventListener('load', () => {
-            // todo listo
+            document.getElementById('btnVerificarDni').addEventListener('click', verificarDNI);
+            document.getElementById('btnEntrada').addEventListener('click', marcarEntrada);
+            document.getElementById('btnSalida').addEventListener('click', marcarSalida);
+            document.getElementById('btnObservacion').addEventListener('click', agregarObservacion);
+            document.getElementById('btnReporteAusencias').addEventListener('click', reporteAusencias);
+            window.addEventListener('resize', () => {
+                if (confettiActivo && !asistenciaYaRegistrada) {
+                    resizeCanvasConf();
+                    initConfetti(200);
+                }
+            });
+            // Preparamos canvas oculto hasta login
+            resizeCanvasConf();
         });
+
+        window.ingresarAlSistema = ingresarAlSistema;
+        window.cerrarSesionGlobal = cerrarSesionGlobal;
     </script>
 </body>
 </html>
