@@ -1,6 +1,6 @@
 // ==================== CONFIGURACIÓN ====================
 // *** IMPORTANTE: VERIFICA QUE ESTA URL SEA EXACTAMENTE LA DE TU WEB APP ***
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI8NH9uhvMC-kpsUq6VrAn4XcdMmcyuyxrydWkiDRVJ-bGIN1sAhoSLYQnfyE_FX0i/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbypHjmIc24VVUQwX4yErUdNhgdsnueK089IYdE0-73jQPq8SwnOdk-A7uLy_2nTfeyK/exec";
 
 // ==================== SISTEMA DE LOGIN MULTI-USUARIO ====================
 const USUARIOS = {
