@@ -124,26 +124,94 @@ function activarAudio() {
     }
 }
 
-// ==================== FUNCIONES DE HORARIO (SÁBADO) ====================
+// ==================== FUNCIONES DE HORARIO POR DEPARTAMENTO ====================
 function esSabado() {
     const hoy = new Date();
     return hoy.getDay() === 6; // 6 = sábado
 }
 
-function getHorarioLimite(tipoEmpleado, esEntrada = true) {
-    const esSab = esSabado();
+function esDomingo() {
+    const hoy = new Date();
+    return hoy.getDay() === 0; // 0 = domingo
+}
+
+function esFeriado() {
+    // Lista de feriados en Perú (formato MM/DD)
+    const feriados = [
+        "01/01", // Año Nuevo
+        "04/06", // Jueves Santo
+        "04/07", // Viernes Santo
+        "05/01", // Día del Trabajo
+        "06/29", // San Pedro y San Pablo
+        "07/28", // Fiestas Patrias
+        "07/29", // Fiestas Patrias
+        "08/30", // Santa Rosa de Lima
+        "10/08", // Combate de Angamos
+        "11/01", // Día de Todos los Santos
+        "12/08", // Inmaculada Concepción
+        "12/25"  // Navidad
+    ];
     
-    // Horario sábado para oficina
-    if (tipoEmpleado !== "OPERATIVO" && esSab) {
-        return esEntrada ? "08:00:00" : "12:45:00";
+    const hoy = new Date();
+    const mesDia = `${hoy.getMonth() + 1}/${hoy.getDate()}`.padStart(5, '0');
+    return feriados.includes(mesDia);
+}
+
+function getHorarioLimite(tipoEmpleado, esEntrada = true, departamento = "", turnoSeleccionado = "") {
+    const esSab = esSabado();
+    const esDom = esDomingo();
+    const esFeri = esFeriado();
+    const depto = departamento.toUpperCase();
+    
+    // ========== DOMINGOS Y FERIADOS ==========
+    if (esDom || esFeri) {
+        // Turno noche de MAQUINA puede trabajar domingos (inician semana)
+        if (depto === "MAQUINA" && turnoSeleccionado === "NOCHE") {
+            return esEntrada ? "20:00:00" : "08:00:00";
+        }
+        // Para otros departamentos, no hay restricción (día libre)
+        return esEntrada ? "23:59:59" : "00:00:00";
     }
     
-    // Horario normal
-    if (tipoEmpleado === "OPERATIVO") {
-        return esEntrada ? "08:00:00" : "19:30:00";
-    } else {
+    // ========== SÁBADOS ==========
+    if (esSab) {
+        // OFICINA trabaja hasta 12:45
+        if (depto === "OFICINA") {
+            return esEntrada ? "08:00:00" : "12:45:00";
+        }
+        // MAQUINA trabaja sábados normalmente
+        if (depto === "MAQUINA") {
+            if (turnoSeleccionado === "NOCHE") {
+                return esEntrada ? "20:00:00" : "08:00:00";
+            } else {
+                return esEntrada ? "08:00:00" : "20:00:00";
+            }
+        }
+        // MAESTRANZA, PRENSA, PRODUCCIÓN, ALMACÉN: sábados libres (extras)
+        if (esEntrada) {
+            return "08:00:00";
+        } else {
+            return "00:00:00"; // Salida sin restricción
+        }
+    }
+    
+    // ========== LUNES A VIERNES ==========
+    // MAQUINA (doble turno)
+    if (depto === "MAQUINA") {
+        if (turnoSeleccionado === "NOCHE") {
+            return esEntrada ? "20:00:00" : "08:00:00";
+        } else {
+            return esEntrada ? "08:00:00" : "20:00:00";
+        }
+    }
+    
+    // OFICINA
+    if (depto === "OFICINA") {
         return esEntrada ? "08:00:00" : "17:30:00";
     }
+    
+    // MAESTRANZA, PRENSA, PRODUCCIÓN, ALMACÉN
+    return esEntrada ? "08:00:00" : "19:30:00";
 }
 
 // ==================== FUNCIONES DE LOGIN ====================
@@ -434,8 +502,14 @@ function guardarSalida(dni, hora) {
     localStorage.setItem(clave, hora);
 }
 
-function verificarHorario(tipoEmpleado, horaActual, esEntrada = true) {
-    const horaLimite = getHorarioLimite(tipoEmpleado, esEntrada);
+function verificarHorario(tipoEmpleado, horaActual, esEntrada = true, departamento = "", turnoSeleccionado = "") {
+    const horaLimite = getHorarioLimite(tipoEmpleado, esEntrada, departamento, turnoSeleccionado);
+    
+    // Si no hay restricción de horario (00:00:00 o 23:59:59)
+    if (horaLimite === "00:00:00" || horaLimite === "23:59:59") {
+        return false;
+    }
+    
     const [horaLim, minLim, segLim] = horaLimite.split(':').map(Number);
     const [horaAct, minAct, segAct] = horaActual.split(':').map(Number);
     
@@ -500,10 +574,13 @@ async function buscarEmpleadoPorDNI(dni) {
         if (tipoSpan) tipoSpan.innerText = data.tipoEmpleado === "OPERATIVO" ? "🔧 OPERATIVO (11h)" : "🏢 OFICINA (8h)";
         
         if (horarioInfoDiv) {
-            if (data.tipoEmpleado === "OPERATIVO") {
-                horarioInfoDiv.innerHTML = `⏰ Horario: 8:00 AM - 7:30 PM (Tolerancia 8:01 AM)`;
+            const depto = data.departamento || "";
+            if (depto.toUpperCase() === "MAQUINA") {
+                horarioInfoDiv.innerHTML = `⏰ Horario MAQUINA: Turno DÍA 8:00-20:00 / Turno NOCHE 20:00-8:00`;
+            } else if (depto.toUpperCase() === "OFICINA") {
+                horarioInfoDiv.innerHTML = `⏰ Horario OFICINA: L-V 8:00-17:30, SÁB 8:00-12:45`;
             } else {
-                horarioInfoDiv.innerHTML = `⏰ Horario: 8:00 AM - 5:30 PM (Tolerancia 8:01 AM)`;
+                horarioInfoDiv.innerHTML = `⏰ Horario: L-V 8:00-19:30, SÁB Libre (extras)`;
             }
         }
         
@@ -544,7 +621,7 @@ async function buscarEmpleadoPorDNI(dni) {
     }
 }
 
-// ==================== REGISTRAR ASISTENCIA (CORREGIDO PARA TURNO NOCHE) ====================
+// ==================== REGISTRAR ASISTENCIA (CORREGIDO CON HORARIOS POR DEPARTAMENTO) ====================
 async function procesarRegistro(tipo, observacionInicial = "") {
     if (!empleadoActual) {
         mostrarMensaje("❌ Primero ingresa un DNI válido", 'error');
@@ -566,9 +643,10 @@ async function procesarRegistro(tipo, observacionInicial = "") {
     }
     
     const esOperarioMaquina = departamento.toUpperCase() === "MAQUINA" || 
-    cargo.toUpperCase().includes("MAQUINA") || 
-    cargo.toUpperCase().includes("OP.MAQUINA");
+                              cargo.toUpperCase().includes("MAQUINA") || 
+                              cargo.toUpperCase().includes("OP.MAQUINA");
     
+    // ========== PREGUNTAR TURNO (solo para MAQUINA) ==========
     if (tipo === "ENTRADA" && esOperarioMaquina && tieneRestriccion) {
         const turno = prompt("🔄 SELECCIONA TU TURNO:\n\n1 - TURNO DÍA (8:00 AM - 8:00 PM)\n2 - TURNO NOCHE (8:00 PM - 8:00 AM)\n\n(1 o 2)");
         if (turno === "1") {
@@ -583,22 +661,47 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    if (tipo === "ENTRADA" && yaRegistroEntrada(dni)) {
-        mostrarMensaje(`❌ Ya registraste ENTRADA hoy`, 'error');
-        return false;
+    // ========== VALIDACIÓN DE ENTRADA (PERMITE NUEVO INGRESO DESPUÉS DE 10 HORAS) ==========
+    if (tipo === "ENTRADA") {
+        const tieneEntradaHoy = yaRegistroEntrada(dni);
+        
+        if (tieneEntradaHoy) {
+            const ultimaEntrada = localStorage.getItem(`entrada_${dni}_${getFechaClave()}`);
+            
+            if (ultimaEntrada) {
+                const [horaUltima, minUltima] = ultimaEntrada.split(":").map(Number);
+                const [horaActual, minActual] = horaActual.split(":").map(Number);
+                
+                const tiempoUltima = horaUltima * 60 + minUltima;
+                const tiempoActual = horaActual * 60 + minActual;
+                let diferenciaMinutos = tiempoActual - tiempoUltima;
+                
+                // Ajustar si es después de medianoche
+                if (diferenciaMinutos < 0) {
+                    diferenciaMinutos = (24 * 60 - tiempoUltima) + tiempoActual;
+                }
+                
+                // Permitir nueva entrada después de 10 horas (600 minutos)
+                if (diferenciaMinutos >= 600) {
+                    console.log(`✅ Nuevo ingreso permitido después de ${Math.floor(diferenciaMinutos / 60)}h ${diferenciaMinutos % 60}m`);
+                    localStorage.removeItem(`entrada_${dni}_${getFechaClave()}`);
+                    localStorage.removeItem(`salida_${dni}_${getFechaClave()}`);
+                } else {
+                    const horasRestantes = Math.floor((600 - diferenciaMinutos) / 60);
+                    const minutosRestantes = (600 - diferenciaMinutos) % 60;
+                    mostrarMensaje(`❌ Ya registraste ENTRADA hoy. Debes esperar ${horasRestantes}h ${minutosRestantes}m para un nuevo ingreso.`, 'error');
+                    return false;
+                }
+            }
+        }
     }
     
-    // ========== IMPORTANTE: PARA SALIDA NO VALIDAMOS QUE TENGA ENTRADA HOY ==========
-    // Esto permite que trabajadores de turno noche marquen salida al día siguiente
     if (tipo === "SALIDA") {
-        // Solo validamos que no tenga ya una salida registrada hoy
         if (yaRegistroSalida(dni)) {
             mostrarMensaje(`❌ Ya registraste SALIDA hoy`, 'error');
             return false;
         }
-        // NO validamos yaRegistroEntrada(dni) - la búsqueda se hace en el servidor
         
-        // Para salida, intentamos obtener el turno del registro anterior (del día anterior)
         if (!turnoSeleccionado && esOperarioMaquina) {
             turnoSeleccionado = await obtenerTurnoRegistroAnterior(dni);
             if (turnoSeleccionado) {
@@ -607,29 +710,19 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
+    // ========== VERIFICAR TARDANZA ==========
     let esTarde = false;
     let horaLimite = "";
     let tipoEmpleado = empleadoActual.tipoEmpleado || "OFICINA";
     
     if (tipo === "ENTRADA" && tieneRestriccion) {
-        if (esOperarioMaquina && turnoSeleccionado === "NOCHE") {
-            horaLimite = "20:00:00";
-            if (horaActual > horaLimite) {
-                esTarde = true;
-            } else {
-                esTarde = false;
-            }
-        } else if (esOperarioMaquina && turnoSeleccionado === "DIA") {
-            horaLimite = "08:00:00";
-            esTarde = horaActual > horaLimite;
-        } else {
-            horaLimite = getHorarioLimite(tipoEmpleado, true);
-            esTarde = verificarHorario(tipoEmpleado, horaActual, true);
-        }
+        // Usar la nueva función con departamento
+        horaLimite = getHorarioLimite(tipoEmpleado, true, departamento, turnoSeleccionado);
+        esTarde = verificarHorario(tipoEmpleado, horaActual, true, departamento, turnoSeleccionado);
         
         if (esTarde) {
             const modalMsg = document.getElementById('modalMensajeTarde');
-            if (modalMsg) modalMsg.innerHTML = `⚠️ Estan intentando ingresar a las ${horaActual}. La hora límite es ${horaLimite}.<br><br>Debes justificar el motivo de tu llegada tarde.`;
+            if (modalMsg) modalMsg.innerHTML = `⚠️ Estás intentando ingresar a las ${horaActual}. La hora límite es ${horaLimite}.<br><br>Debes justificar el motivo de tu llegada tarde.`;
             if (justificacionTarde) justificacionTarde.value = "";
             if (modalTarde) modalTarde.style.display = 'flex';
             
@@ -664,45 +757,16 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         }
     }
     
-    // ========== VERIFICAR SALIDA ANTICIPADA (CORREGIDO PARA TURNO NOCHE) ==========
+    // ========== VERIFICAR SALIDA ANTICIPADA ==========
     if (tipo === "SALIDA" && tieneRestriccion) {
         let esAnticipada = false;
         let horaMinima = "";
         
-        // Mostrar información de depuración
-        console.log("=== DEPURACIÓN SALIDA ===");
-        console.log("Cargo:", cargo);
-        console.log("Departamento:", departamento);
-        console.log("esOperarioMaquina:", esOperarioMaquina);
-        console.log("turnoSeleccionado:", turnoSeleccionado);
-        console.log("Hora actual:", horaActual);
+        // Usar la nueva función con departamento
+        horaMinima = getHorarioLimite(tipoEmpleado, false, departamento, turnoSeleccionado);
+        esAnticipada = verificarHorario(tipoEmpleado, horaActual, false, departamento, turnoSeleccionado);
         
-        // Para operarios de máquina con turno específico
-        if (esOperarioMaquina && turnoSeleccionado === "NOCHE") {
-            // Turno noche: horario laboral de 8:00 PM a 8:00 AM del día siguiente
-            // Salida anticipada si sale ANTES de las 8:00 AM
-            horaMinima = "08:00:00";
-            esAnticipada = horaActual < horaMinima;
-            console.log("Turno NOCHE detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
-        } 
-        else if (esOperarioMaquina && turnoSeleccionado === "DIA") {
-            // Turno día: horario laboral de 8:00 AM a 8:00 PM
-            horaMinima = "20:00:00";
-            esAnticipada = horaActual < horaMinima;
-            console.log("Turno DIA detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
-        }
-        else if (tipoEmpleado === "OPERATIVO") {
-            horaMinima = "19:30:00";
-            esAnticipada = horaActual < horaMinima;
-            console.log("OPERATIVO detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
-        }
-        else {
-            horaMinima = "17:30:00";
-            esAnticipada = horaActual < horaMinima;
-            console.log("OFICINA detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
-        }
-        
-        if (esAnticipada) {
+        if (esAnticipada && horaMinima !== "00:00:00") {
             const modalMsg = document.getElementById('modalMensajeSalida');
             if (modalMsg) modalMsg.innerHTML = `⚠️ SALIDA ANTICIPADA\n\nHora actual: ${horaActual}\nHora mínima de salida: ${horaMinima}\n\nTu horario laboral termina a las ${horaMinima}.\n\nDebes justificar el motivo de tu salida anticipada.`;
             if (justificacionSalida) justificacionSalida.value = "";
@@ -845,31 +909,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ========== CONFIGURACIÓN DE TECLADO NUMÉRICO PARA DNI ==========
     if (dniInput) {
-        // Configurar teclado numérico en móviles
         dniInput.setAttribute('inputmode', 'numeric');
         dniInput.setAttribute('pattern', '[0-9]*');
         
-        // Forzar solo números y buscar automáticamente al completar 8 dígitos
         dniInput.addEventListener('input', function(e) {
-            // Limitar a solo números
             this.value = this.value.replace(/[^0-9]/g, '');
-            
-            // Si tiene 8 dígitos, buscar automáticamente
             if (this.value.length === 8) {
                 buscarEmpleadoPorDNI(this.value);
-                // Ocultar teclado en móviles después de la búsqueda
                 this.blur();
             }
         });
         
-        // Bloquear letras en el teclado
         dniInput.addEventListener('keypress', function(e) {
             if (e.key < '0' || e.key > '9') {
                 e.preventDefault();
             }
         });
         
-        // Prevenir pegado de texto no numérico
         dniInput.addEventListener('paste', function(e) {
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
             if (!/^\d+$/.test(pastedText)) {
@@ -877,7 +933,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Mantener eventos existentes (blur y enter)
         dniInput.addEventListener('blur', () => buscarEmpleadoPorDNI(dniInput.value.trim()));
         dniInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') buscarEmpleadoPorDNI(dniInput.value.trim());
