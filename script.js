@@ -896,4 +896,35 @@ document.addEventListener('DOMContentLoaded', function() {
     mostrarLogin();
 });
 
+async function generarReporteAusenciasDescargable() {
+    let fechaInicioElem = document.getElementById('fechaInicio');
+    let fechaFinElem = document.getElementById('fechaFin');
+    let empleadoFiltroElem = document.getElementById('empleadoFiltro');
+    
+    let fechaInicio = fechaInicioElem ? fechaInicioElem.value : "";
+    let fechaFin = fechaFinElem ? fechaFinElem.value : "";
+    let empleadoFiltro = empleadoFiltroElem ? empleadoFiltroElem.value : "todos";
+    
+    if (!fechaInicio || !fechaFin) {
+        alert("⚠️ Por favor selecciona un rango de fechas");
+        return;
+    }
+    
+    mostrarMensaje(`⏳ Generando reporte de ausencias...`, 'warning');
+    
+    try {
+        const url = `${SCRIPT_URL}?accion=reporteAusencias&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&empleado=${empleadoFiltro}`;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `reporte_ausencias_${fechaInicio}_al_${fechaFin}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        mostrarMensaje(`✅ Reporte de ausencias descargado`, 'success');
+    } catch (error) {
+        console.error("Error:", error);
+        mostrarMensaje("⚠️ Error al generar reporte", 'error');
+    }
+}
+
 console.log("✅ Sistema cargado correctamente");
