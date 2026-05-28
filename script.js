@@ -454,6 +454,18 @@ function getHoraActual() {
     return ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+// ==================== FUNCIÓN PARA OBTENER TURNO DEL REGISTRO ANTERIOR ====================
+async function obtenerTurnoRegistroAnterior(dni) {
+    try {
+        const response = await fetch(`${SCRIPT_URL}?accion=ultimoTurno&dni=${encodeURIComponent(dni)}`);
+        const data = await response.json();
+        return data.turno || "";
+    } catch (error) {
+        console.error("Error al obtener turno anterior:", error);
+        return "";
+    }
+}
+
 // ==================== BUSCAR EMPLEADO ====================
 async function buscarEmpleadoPorDNI(dni) {
     if (dni.length < 6) {
@@ -585,6 +597,14 @@ async function procesarRegistro(tipo, observacionInicial = "") {
             return false;
         }
         // NO validamos yaRegistroEntrada(dni) - la búsqueda se hace en el servidor
+        
+        // Para salida, intentamos obtener el turno del registro anterior (del día anterior)
+        if (!turnoSeleccionado && esOperarioMaquina) {
+            turnoSeleccionado = await obtenerTurnoRegistroAnterior(dni);
+            if (turnoSeleccionado) {
+                console.log(`Turno obtenido del registro anterior: ${turnoSeleccionado}`);
+            }
+        }
     }
     
     let esTarde = false;
@@ -649,28 +669,37 @@ async function procesarRegistro(tipo, observacionInicial = "") {
         let esAnticipada = false;
         let horaMinima = "";
         
+        // Mostrar información de depuración
+        console.log("=== DEPURACIÓN SALIDA ===");
+        console.log("Cargo:", cargo);
+        console.log("Departamento:", departamento);
+        console.log("esOperarioMaquina:", esOperarioMaquina);
+        console.log("turnoSeleccionado:", turnoSeleccionado);
+        console.log("Hora actual:", horaActual);
+        
         // Para operarios de máquina con turno específico
         if (esOperarioMaquina && turnoSeleccionado === "NOCHE") {
             // Turno noche: horario laboral de 8:00 PM a 8:00 AM del día siguiente
             // Salida anticipada si sale ANTES de las 8:00 AM
             horaMinima = "08:00:00";
             esAnticipada = horaActual < horaMinima;
+            console.log("Turno NOCHE detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
         } 
         else if (esOperarioMaquina && turnoSeleccionado === "DIA") {
             // Turno día: horario laboral de 8:00 AM a 8:00 PM
-            // Salida anticipada si sale ANTES de las 8:00 PM
             horaMinima = "20:00:00";
             esAnticipada = horaActual < horaMinima;
+            console.log("Turno DIA detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
         }
         else if (tipoEmpleado === "OPERATIVO") {
-            // Operativo normal: horario laboral de 8:00 AM a 7:30 PM
             horaMinima = "19:30:00";
             esAnticipada = horaActual < horaMinima;
+            console.log("OPERATIVO detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
         }
         else {
-            // Oficina: horario laboral de 8:00 AM a 5:30 PM
             horaMinima = "17:30:00";
             esAnticipada = horaActual < horaMinima;
+            console.log("OFICINA detectado - Hora mínima:", horaMinima, "esAnticipada:", esAnticipada);
         }
         
         if (esAnticipada) {
